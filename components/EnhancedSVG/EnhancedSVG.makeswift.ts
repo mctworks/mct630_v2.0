@@ -1,14 +1,6 @@
 import { runtime } from '@/lib/makeswift/runtime'
-import {
-  Style,
-  Image,
-  Link,
-  Color,
-  Number,
-  Select,
-  Checkbox,
-} from '@makeswift/runtime/controls'
-import EnhancedSVG from './EnhancedSVG'
+import { Style, Image, Color, Number, Checkbox } from '@makeswift/runtime/controls'
+import { EnhancedSVG } from './EnhancedSVG'
 
 runtime.registerComponent(EnhancedSVG, {
   type: 'enhanced-svg',
@@ -19,33 +11,32 @@ runtime.registerComponent(EnhancedSVG, {
       label: 'SVG File',
       format: Image.Format.WithDimensions,
     }),
-    lightFillColor: Color({
-      label: 'Light Mode Fill',
+    lightStrokeColor: Color({
+      label: 'Light Theme Stroke',
       defaultValue: '#000000',
     }),
-    darkFillColor: Color({
-      label: 'Dark Mode Fill',
+    darkStrokeColor: Color({
+      label: 'Dark Theme Stroke',
       defaultValue: '#ffffff',
     }),
-    link: Link({ label: 'Link' }),
-    transitionEffect: Select({
-      label: 'Transition Effect',
-      options: [
-        { value: 'none', label: 'No Transition' },
-        { value: 'screentone-top', label: 'Screentone (Top to Bottom)' },
-        { value: 'screentone-bottom', label: 'Screentone (Bottom to Top)' },
-      ],
-      defaultValue: 'none',
-    }),
-    transitionDuration: Number({
-      label: 'Transition Duration (s)',
-      defaultValue: 1.5,
-      step: 0.1,
-      min: 0,
-    }),
     enableGradientDraw: Checkbox({
-      label: 'Enable GSAP Gradient Draw',
+      label: 'Enable Gradient Animation',
       defaultValue: false,
+    }),
+    gradientStartColor: Color({
+      label: 'Gradient Start Color',
+      defaultValue: '#000000',
+    }),
+    gradientEndColor: Color({
+      label: 'Gradient End Color',
+      defaultValue: '#ffffff',
+    }),
+    gradientDuration: Number({
+      label: 'Gradient Animation Duration',
+      defaultValue: 2,
+      min: 0.5,
+      max: 10,
+      step: 0.1,
     }),
   },
 })
