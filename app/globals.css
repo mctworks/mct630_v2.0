@@ -664,6 +664,6 @@ body *,
 } */
 
 .enhanced-svg-container svg image {
-  /* Let the JavaScript handle the filtering */
-  mix-blend-mode: multiply;
+  /* Remove mix-blend-mode to prevent interference with color filter */
+  mix-blend-mode: normal;
 }

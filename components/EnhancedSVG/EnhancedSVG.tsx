@@ -33,6 +33,11 @@ export function EnhancedSVG({
   const containerRef = useRef<HTMLDivElement>(null)
 
   const strokeColor = isDark ? darkStrokeColor : lightStrokeColor
+  
+  // Log theme changes
+  useEffect(() => {
+    console.log('Theme changed:', { isDark, strokeColor, light: lightStrokeColor, dark: darkStrokeColor })
+  }, [isDark, strokeColor, lightStrokeColor, darkStrokeColor])
 
   useEffect(() => {
     if (!svg?.url) return
@@ -47,34 +52,31 @@ export function EnhancedSVG({
   }, [svg?.url])
 
   
-const recolorShapesDebounced = useCallback(
-  debounce((svgEl: SVGElement | null, color: string) => {
-    if (!svgEl) return
+  const recolorShapesDebounced = useCallback(
+    debounce((svgEl: SVGElement | null, color: string) => {
+      if (!svgEl) return
+      
+      console.log('Recoloring SVG with color:', color)
 
-    // Add filter for raster images
-    const defs = svgEl.querySelector('defs') || svgEl.insertBefore(document.createElementNS('http://www.w3.org/2000/svg', 'defs'), svgEl.firstChild)
-    const filterId = 'colorize-' + Math.random().toString(36).substr(2, 9)
-    
-    // Create a filter that maintains transparency while coloring
-    const filter = document.createElementNS('http://www.w3.org/2000/svg', 'filter')
-    filter.id = filterId
-    filter.innerHTML = `
-      <feColorMatrix type="matrix"
-        values="
-          .33 .33 .33 0 0
-          .33 .33 .33 0 0
-          .33 .33 .33 0 0
-          0   0   0   1 0"
-        in="SourceGraphic"
-        result="grayscale"/>
-      <feComponentTransfer in="grayscale" result="tinted">
-        <feFuncR type="linear" slope="0" intercept="${parseInt(color.slice(1,3), 16)/255}"/>
-        <feFuncG type="linear" slope="0" intercept="${parseInt(color.slice(3,5), 16)/255}"/>
-        <feFuncB type="linear" slope="0" intercept="${parseInt(color.slice(5,7), 16)/255}"/>
-        <feFuncA type="identity"/>
-      </feComponentTransfer>
-    `
-    defs.appendChild(filter)
+      // Remove any existing filters
+      const existingDefs = svgEl.querySelector('defs')
+      if (existingDefs) {
+        existingDefs.remove()
+      }
+
+      // Add new defs section
+      const defs = svgEl.insertBefore(document.createElementNS('http://www.w3.org/2000/svg', 'defs'), svgEl.firstChild)
+      const filterId = 'colorize-' + Math.random().toString(36).substr(2, 9)
+
+      // Create new filter with flood and preserve opacity
+      const filter = document.createElementNS('http://www.w3.org/2000/svg', 'filter')
+      filter.id = filterId
+      filter.setAttribute('color-interpolation-filters', 'sRGB')
+      filter.innerHTML = `
+        <feFlood flood-color="${color}" result="flood"/>
+        <feComposite in="flood" in2="SourceAlpha" operator="in" result="colored-alpha"/>
+        <feBlend mode="normal" in="colored-alpha" in2="SourceGraphic"/>`
+      defs.appendChild(filter)
 
     // Handle each element appropriately
     const allElements = svgEl.querySelectorAll('*')
@@ -103,17 +105,19 @@ const recolorShapesDebounced = useCallback(
                        computedStyle.strokeOpacity !== '0'
 
       if (tagName === 'image') {
-        // Handle raster images with our special color filter
-        ;(el as SVGElement).style.setProperty('filter', `url(#${filterId})`, 'important')
+        // For images, force remove any existing filter and apply new one
+        el.removeAttribute('filter');
+        (el as SVGElement).style.removeProperty('filter');
+        (el as SVGElement).style.setProperty('filter', `url(#${filterId})`, 'important')
       } else {
-        // FIX FOR BURGER ICON: Apply color to both fill AND stroke for all non-image elements
-        // This ensures burger icon shapes get colored properly
         if (hadFill || hadStroke) {
           if (hadFill) {
-            ;(el as SVGElement).style.setProperty('fill', color, 'important')
+            el.removeAttribute('fill');
+            (el as SVGElement).style.setProperty('fill', color, 'important')
           }
           if (hadStroke) {
-            ;(el as SVGElement).style.setProperty('stroke', color, 'important')
+            el.removeAttribute('stroke');
+            (el as SVGElement).style.setProperty('stroke', color, 'important')
           }
         }
       }
@@ -128,19 +132,34 @@ const recolorShapesDebounced = useCallback(
     // Inject SVG content
     const wrapper = containerRef.current.querySelector('.icon-fill')
     if (wrapper) {
-      wrapper.innerHTML = svgContent
       const svgEl = wrapper.querySelector('svg')
-      if (svgEl) {
-        // Clear any old styles/filters first
-        const oldDefs = svgEl.querySelector('defs')
-        if (oldDefs) oldDefs.remove()
-        
-        // Apply our recoloring
+      
+      // If we have an SVG already, just recolor it
+      if (svgEl && wrapper.innerHTML.includes('svg')) {
+        console.log('Recoloring existing SVG with:', strokeColor)
         recolorShapesDebounced(svgEl, strokeColor)
+      } else {
+        // Otherwise inject new SVG content
+        console.log('Injecting new SVG content')
+        wrapper.innerHTML = svgContent
+        const newSvgEl = wrapper.querySelector('svg')
+        if (newSvgEl) {
+          recolorShapesDebounced(newSvgEl, strokeColor)
+        }
       }
     }
 
-    return () => recolorShapesDebounced.cancel()
+    return () => {
+      recolorShapesDebounced.cancel()
+      // Clean up any orphaned filters
+      if (containerRef.current) {
+        const svgEl = containerRef.current.querySelector('svg')
+        if (svgEl) {
+          const defs = svgEl.querySelector('defs')
+          if (defs) defs.remove()
+        }
+      }
+    }
   }, [svgContent, strokeColor, enableGradientDraw, recolorShapesDebounced])
 
 
