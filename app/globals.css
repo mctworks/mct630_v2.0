@@ -648,3 +648,22 @@ body *,
   background-color: var(--makeswift-bg) !important;
   color: var(--makeswift-text) !important;
 }
+
+/*EnahncedSVG*/
+/* .enhanced-svg-container svg,
+.enhanced-svg-container svg * {
+  fill: inherit !important;
+  stroke: inherit !important;
+  filter: inherit !important;
+} */
+
+/* .enhanced-svg-container svg,
+.enhanced-svg-container svg * {
+  fill: inherit !important;
+  stroke: inherit !important;
+} */
+
+.enhanced-svg-container svg image {
+  /* Let the JavaScript handle the filtering */
+  mix-blend-mode: multiply;
+}

@@ -47,87 +47,80 @@ export function EnhancedSVG({
   }, [svg?.url])
 
   
-  const recolorShapesDebounced = useCallback(
-    debounce((svgEl: SVGElement | null, color: string) => {
-      if (!svgEl) return
+const recolorShapesDebounced = useCallback(
+  debounce((svgEl: SVGElement | null, color: string) => {
+    if (!svgEl) return
 
-      // Add filter for raster images
-      const defs = svgEl.querySelector('defs') || svgEl.insertBefore(document.createElementNS('http://www.w3.org/2000/svg', 'defs'), svgEl.firstChild)
-      const filterId = 'colorize-' + Math.random().toString(36).substr(2, 9)
+    // Add filter for raster images
+    const defs = svgEl.querySelector('defs') || svgEl.insertBefore(document.createElementNS('http://www.w3.org/2000/svg', 'defs'), svgEl.firstChild)
+    const filterId = 'colorize-' + Math.random().toString(36).substr(2, 9)
+    
+    // Create a filter that maintains transparency while coloring
+    const filter = document.createElementNS('http://www.w3.org/2000/svg', 'filter')
+    filter.id = filterId
+    filter.innerHTML = `
+      <feColorMatrix type="matrix"
+        values="
+          .33 .33 .33 0 0
+          .33 .33 .33 0 0
+          .33 .33 .33 0 0
+          0   0   0   1 0"
+        in="SourceGraphic"
+        result="grayscale"/>
+      <feComponentTransfer in="grayscale" result="tinted">
+        <feFuncR type="linear" slope="0" intercept="${parseInt(color.slice(1,3), 16)/255}"/>
+        <feFuncG type="linear" slope="0" intercept="${parseInt(color.slice(3,5), 16)/255}"/>
+        <feFuncB type="linear" slope="0" intercept="${parseInt(color.slice(5,7), 16)/255}"/>
+        <feFuncA type="identity"/>
+      </feComponentTransfer>
+    `
+    defs.appendChild(filter)
+
+    // Handle each element appropriately
+    const allElements = svgEl.querySelectorAll('*')
+    allElements.forEach(el => {
+      if (el === filter || el.tagName.toLowerCase() === 'defs') return
+
+      const tagName = el.tagName.toLowerCase()
+
+      // Get the original attributes
+      const originalFill = el.getAttribute('fill')
+      const originalStroke = el.getAttribute('stroke')
+      const originalStyle = el.getAttribute('style')
+      const computedStyle = window.getComputedStyle(el)
       
-      // Create a filter that maintains transparency while coloring
-      const filter = document.createElementNS('http://www.w3.org/2000/svg', 'filter')
-      filter.id = filterId
-      filter.innerHTML = `
-        <feColorMatrix type="matrix"
-          values="
-            .33 .33 .33 0 0
-            .33 .33 .33 0 0
-            .33 .33 .33 0 0
-            0   0   0   1 0"
-          in="SourceGraphic"
-          result="grayscale"/>
-        <feComponentTransfer in="grayscale" result="tinted">
-          <feFuncR type="linear" slope="0" intercept="${parseInt(color.slice(1,3), 16)/255}"/>
-          <feFuncG type="linear" slope="0" intercept="${parseInt(color.slice(3,5), 16)/255}"/>
-          <feFuncB type="linear" slope="0" intercept="${parseInt(color.slice(5,7), 16)/255}"/>
-          <feFuncA type="identity"/>
-        </feComponentTransfer>
-      `
-      defs.appendChild(filter)
+      // Check if the element was originally meant to have a fill or stroke
+      const hadFill = originalFill !== 'none' && 
+                     originalFill !== null && 
+                     !originalStyle?.includes('fill: none') &&
+                     computedStyle.fill !== 'none' &&
+                     computedStyle.fillOpacity !== '0'
+                     
+      const hadStroke = originalStroke !== 'none' && 
+                       originalStroke !== null && 
+                       !originalStyle?.includes('stroke: none') &&
+                       computedStyle.stroke !== 'none' &&
+                       computedStyle.strokeOpacity !== '0'
 
-      // Handle each element appropriately
-      const allElements = svgEl.querySelectorAll('*')
-      allElements.forEach(el => {
-        if (el === filter || el.tagName.toLowerCase() === 'defs') return
-
-        const tagName = el.tagName.toLowerCase()
-
-        // Get the original attributes
-        const originalFill = el.getAttribute('fill')
-        const originalStroke = el.getAttribute('stroke')
-        const originalStyle = el.getAttribute('style')
-        const computedStyle = window.getComputedStyle(el)
-        
-        // Check if the element was originally meant to have a fill or stroke
-        const hadFill = originalFill !== 'none' && 
-                       originalFill !== null && 
-                       !originalStyle?.includes('fill: none') &&
-                       computedStyle.fill !== 'none' &&
-                       computedStyle.fillOpacity !== '0'
-                       
-        const hadStroke = originalStroke !== 'none' && 
-                         originalStroke !== null && 
-                         !originalStyle?.includes('stroke: none') &&
-                         computedStyle.stroke !== 'none' &&
-                         computedStyle.strokeOpacity !== '0'
-
-        if (tagName === 'image') {
-          // Handle raster images with our special color filter
-          ;(el as SVGElement).style.setProperty('filter', `url(#${filterId})`, 'important')
-        } else if (tagName === 'path' && el.getAttribute('d')?.includes('a')) {
-          // Special handling for curved rectangle paths
-          ;(el as SVGElement).style.setProperty('fill', color, 'important')
-          ;(el as SVGElement).style.setProperty('stroke', color, 'important')
-        } else {
-          // For all other elements, respect their original fill/stroke state
+      if (tagName === 'image') {
+        // Handle raster images with our special color filter
+        ;(el as SVGElement).style.setProperty('filter', `url(#${filterId})`, 'important')
+      } else {
+        // FIX FOR BURGER ICON: Apply color to both fill AND stroke for all non-image elements
+        // This ensures burger icon shapes get colored properly
+        if (hadFill || hadStroke) {
           if (hadFill) {
             ;(el as SVGElement).style.setProperty('fill', color, 'important')
-          } else {
-            ;(el as SVGElement).style.setProperty('fill', 'none', 'important')
           }
-          
           if (hadStroke) {
             ;(el as SVGElement).style.setProperty('stroke', color, 'important')
-          } else {
-            ;(el as SVGElement).style.setProperty('stroke', 'none', 'important')
           }
         }
-      })
-    }, 100),
-    []
-  )
-
+      }
+    })
+  }, 100),
+  []
+)
 
   useEffect(() => {
     if (!containerRef.current || !svgContent || enableGradientDraw) return
