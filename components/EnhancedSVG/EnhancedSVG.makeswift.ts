@@ -1,12 +1,20 @@
+/*EnhancedSVG.makeswift.ts*/
 import { runtime } from '@/lib/makeswift/runtime'
-import { Style, Image, Color, Number, Checkbox } from '@makeswift/runtime/controls'
+import { 
+  Style, 
+  Image, 
+  Color, 
+  Number, 
+  Checkbox,
+  TextInput
+} from '@makeswift/runtime/controls'
 import { EnhancedSVG } from './EnhancedSVG'
 
 runtime.registerComponent(EnhancedSVG, {
   type: 'enhanced-svg',
   label: 'Enhanced SVG',
   props: {
-    className: Style(),
+    className: Style(), // This automatically enables all style controls
     svg: Image({
       label: 'SVG File',
       format: Image.Format.WithDimensions,
@@ -32,11 +40,23 @@ runtime.registerComponent(EnhancedSVG, {
       defaultValue: '#ffffff',
     }),
     gradientDuration: Number({
-      label: 'Gradient Animation Duration',
+      label: 'Animation Duration (seconds)',
       defaultValue: 2,
       min: 0.5,
       max: 10,
       step: 0.1,
+    }),
+    logoStrokeWidth: Number({
+      label: 'Stroke Width',
+      defaultValue: 2,
+      min: 0.5,
+      max: 10,
+      step: 0.1,
+    }),
+    animatePaths: TextInput({
+      label: 'Paths to animate',
+      description: 'Comma-separated IDs (frame,line1,etc) or "all" for entire SVG',
+      defaultValue: 'all',
     }),
   },
 })

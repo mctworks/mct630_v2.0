@@ -650,20 +650,20 @@ body *,
 }
 
 /*EnahncedSVG*/
-/* .enhanced-svg-container svg,
-.enhanced-svg-container svg * {
-  fill: inherit !important;
-  stroke: inherit !important;
-  filter: inherit !important;
-} */
+.enhanced-svg-container {
+  display: inline-block;
+}
 
-/* .enhanced-svg-container svg,
-.enhanced-svg-container svg * {
-  fill: inherit !important;
-  stroke: inherit !important;
-} */
+.enhanced-svg-container .icon-fill {
+  display: block;
+}
+
+.enhanced-svg-container .icon-fill svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
 
 .enhanced-svg-container svg image {
-  /* Remove mix-blend-mode to prevent interference with color filter */
   mix-blend-mode: normal;
 }
