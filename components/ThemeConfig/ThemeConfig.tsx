@@ -191,7 +191,15 @@ export function ThemeConfig({
   div[class^="mswft-"]:not([style*="background-color"]) {
   background-color: ${colors.background} !important;
 }
-  
+
+/* This rule ensures the pattern shapes (e.g., dots/lines inside the pattern definition) 
+   are colored using the theme color defined by the JS. */
+.enhanced-svg-container .svg-pattern-shape {
+    fill: var(--svg-line-color, #000); /* Use the CSS variable */
+    stroke: var(--svg-line-color, #000);
+}
+
+
   /* Nuclear option */
 div:not([style*="background"]):not(.outer-container):not(.bm-menu):not(.nav-status-box):not(.#nav-status > div) {
   background-color: ${colors.background} !important;

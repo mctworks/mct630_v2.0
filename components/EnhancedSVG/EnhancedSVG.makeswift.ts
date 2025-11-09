@@ -14,7 +14,7 @@ runtime.registerComponent(EnhancedSVG, {
   type: 'enhanced-svg',
   label: 'Enhanced SVG',
   props: {
-    className: Style(), // This automatically enables all style controls
+    className: Style(),
     svg: Image({
       label: 'SVG File',
       format: Image.Format.WithDimensions,
@@ -46,6 +46,14 @@ runtime.registerComponent(EnhancedSVG, {
       max: 10,
       step: 0.1,
     }),
+    resetDuration: Number({
+      label: 'Reset Speed (0.1-1.0)',
+      description: 'Lower values = faster reset animation',
+      defaultValue: 0.3,
+      min: 0.1,
+      max: 1.0,
+      step: 0.1,
+    }),
     logoStrokeWidth: Number({
       label: 'Stroke Width',
       defaultValue: 2,
@@ -55,7 +63,7 @@ runtime.registerComponent(EnhancedSVG, {
     }),
     animatePaths: TextInput({
       label: 'Paths to animate',
-      description: 'Comma-separated IDs (frame,line1,etc) or "all" for entire SVG',
+      description: 'Use "all" for entire SVG, or specific element IDs',
       defaultValue: 'all',
     }),
   },

@@ -1,12 +1,16 @@
-'use client'
+"use client"
 import { useTheme } from '@/components/ThemeConfig/ThemeConfig'
 
 export function ThemeToggle() {
   const { isDark, toggleTheme } = useTheme()
-  
+
   return (
-    <button onClick={toggleTheme} className="theme-toggle">
-      {isDark ? '☀️ Light Mode' : '🌙 Dark Mode'}
+    <button onClick={toggleTheme} className="theme-toggle" aria-label="Toggle theme">
+      {isDark ? (
+        <img src="/icons/mct630-light.svg" alt="Light mode" width={36} height={36} />
+      ) : (
+        <img src="/icons/mct630-dark.svg" alt="Dark mode" width={36} height={36} />
+      )}
     </button>
   )
 }
