@@ -104,7 +104,6 @@ export function NavMenuPlus({ className, logo, links, headerBar}: Props) {
     }
     
     if (pageWrap) {
-      // Apply blur to the main content when menu is open
       gsap.to(pageWrap, {
         filter: state.isOpen ? 'blur(2px)' : 'none',
         duration: 0.5,
