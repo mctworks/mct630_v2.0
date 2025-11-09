@@ -1,12 +1,12 @@
 import type { Metadata } from 'next'
 import { DM_Serif_Text, Inter, Roboto_Mono } from 'next/font/google'
 import localFont from 'next/font/local'
-import { draftMode } from 'next/headers'
 import { client } from '@/lib/makeswift/client'
 import '@/lib/makeswift/components'
 import { MakeswiftProvider } from '@/lib/makeswift/provider'
+import { MakeswiftComponent } from '@makeswift/runtime/next'
+import { getSiteVersion } from '@makeswift/runtime/next/server'
 import { ThemeConfig } from '@/components/ThemeConfig/ThemeConfig'
-
 import './globals.css'
 
 const body = Inter({
@@ -48,14 +48,22 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-
+  const navSnapshot = await client.getComponentSnapshot(
+    'global-nav-menu',
+    { siteVersion: getSiteVersion() }
+  )
+  
   return (
     <html lang="en">
       <body className={`${body.variable} ${heading.variable} ${mono.variable} ${ztGatha.variable}`}>
         <div id="outer-container" className="outer-container">
-          
-            <MakeswiftProvider previewMode={(await draftMode()).isEnabled}>
-              <ThemeConfig>
+          <MakeswiftProvider siteVersion={await getSiteVersion()}>
+            <ThemeConfig>
+              <MakeswiftComponent
+                snapshot={navSnapshot}
+                label="Nav Menu Plus"
+                type="navigation"
+              />
               <main id="page-wrap" className="page-wrap">
                 {children}
               </main>

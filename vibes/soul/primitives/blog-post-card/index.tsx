@@ -57,11 +57,9 @@ export function BlogPostCard({
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-(--blog-post-card-image-background,var(--contrast-100))">
         {image != null ? (
-          <Image
+          <img
             alt={image.alt}
-            className="object-cover transition-transform duration-500 ease-out group-hover:scale-110"
-            fill
-            sizes="(min-width: 80rem) 25vw, (min-width: 56rem) 33vw, (min-width: 28rem) 50vw, 100vw"
+            className="object-cover w-full h-full transition-transform duration-500 ease-out group-hover:scale-110"
             src={image.src}
           />
         ) : (

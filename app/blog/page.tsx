@@ -9,7 +9,10 @@ import { client as MakeswiftClient } from '@/lib/makeswift/client'
 import { BlogPostList } from '@/vibes/soul/sections/blog-post-list'
 import { SectionLayout } from '@/vibes/soul/sections/section-layout'
 
+
 export default async function Page() {
+  console.log('API Key:', process.env.MAKESWIFT_SITE_API_KEY)
+  
   const blogs = await getAllBlogs()
   const formattedBlogs = formatBlogs(blogs, false)
   const navSnapshot = await MakeswiftClient.getComponentSnapshot(
