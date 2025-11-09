@@ -73,7 +73,7 @@ export function NavMenuPlus({ className, logo, links, headerBar}: Props) {
     setIsOpen(state.isOpen);
     
     const statusBox = document.getElementsByClassName('nav-status-box')[0];
-    const pageContent = document.getElementsByClassName('page-content')[0];
+    const pageWrap = document.getElementById('page-wrap');
     const headerBar = document.getElementsByClassName('nav-header-bar')[0];
 
     if (statusBox) {
@@ -103,16 +103,18 @@ export function NavMenuPlus({ className, logo, links, headerBar}: Props) {
       }
     }
     
-    if (pageContent) {
-      pageContent.setAttribute('style',
-        state.isOpen ? 'filter: blur(2px); transition: filter 0.5s ease;'
-                    : 'filter: none; transition: filter 0.5s ease;'
-      );
+    if (pageWrap) {
+      // Apply blur to the main content when menu is open
+      gsap.to(pageWrap, {
+        filter: state.isOpen ? 'blur(2px)' : 'none',
+        duration: 0.5,
+        ease: 'power2.out'
+      });
     }
   };
 
   return (
-    <nav className={`nav-container flex items-center justify-between top-0 z-50' : ''}`}>
+    <nav className={`nav-container flex items-center justify-between w-full ${className ?? ''}`}>
       <div className="nav-status-box" style={{ display: 'none' }}>
         <span
           id="nav-status"
@@ -129,7 +131,7 @@ export function NavMenuPlus({ className, logo, links, headerBar}: Props) {
         width={225}
         isOpen={isOpen}
         onStateChange={handleStateChange}
-        className={`${className} nav-menu-plus rounded-lg outline-double outline-2 outline-offset-2 border-double top-0 w-full`}
+        className="nav-menu-plus rounded-lg outline-double outline-2 outline-offset-2 border-double"
         burgerButtonClassName="bm-burger-button"
         burgerBarClassName="bm-burger-bars"
         crossButtonClassName="bm-cross-button"
