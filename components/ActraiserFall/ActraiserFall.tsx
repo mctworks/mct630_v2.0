@@ -29,17 +29,19 @@ export function ActraiserFall({
   const router = useRouter()
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // Effect to handle initial page load animation
+  // Effect to handle initial page load animation with improved timing
   useEffect(() => {
     const pageWrap = document.getElementById('page-wrap')
     if (pageWrap) {
-      // Force initial opacity to 0
+      // Force initial state
       pageWrap.style.opacity = '0'
+      pageWrap.classList.remove('fade-in')
       
-      // Small delay to ensure opacity is set before animation
-      requestAnimationFrame(() => {
-        pageWrap.style.opacity = ''  // Remove inline opacity to let CSS animation take over
-      })
+      // Add a small delay to ensure the opacity is applied
+      setTimeout(() => {
+        pageWrap.style.removeProperty('opacity')
+        pageWrap.classList.add('fade-in')
+      }, 50)
     }
   }, [])
 
@@ -88,13 +90,26 @@ export function ActraiserFall({
       return
     }
 
-    // Get viewport dimensions
-    const viewportWidth = window.innerWidth
-    const viewportHeight = window.innerHeight
-
-    // Calculate click position as percentages of viewport
-    const xPercent = (e.clientX / viewportWidth) * 100
-    const yPercent = (e.clientY / viewportHeight) * 100
+    // If pageWrap exists, calculate click position relative to its bounding rect
+    let xPercent = 50
+    let yPercent = 50
+    try {
+      if (pageWrap) {
+        const rect = pageWrap.getBoundingClientRect()
+        const px = Math.max(0, Math.min(e.clientX - rect.left, rect.width))
+        const py = Math.max(0, Math.min(e.clientY - rect.top, rect.height))
+        xPercent = (px / rect.width) * 100
+        yPercent = (py / rect.height) * 100
+      } else {
+        // Fallback to viewport percentages
+        xPercent = (e.clientX / window.innerWidth) * 100
+        yPercent = (e.clientY / window.innerHeight) * 100
+      }
+    } catch (err) {
+      // Keep sensible defaults if anything goes wrong
+      xPercent = 50
+      yPercent = 50
+    }
 
     // Clear any existing transition state first
     pageWrap.classList.remove('transitioning')
@@ -117,19 +132,21 @@ export function ActraiserFall({
     }, transitionDuration * 1000)
   }
 
-  // Add effect to handle fade-in after navigation
+  // Enhanced effect to handle fade-in after navigation
   useEffect(() => {
     if (sessionStorage.getItem('needsFadeIn') === 'true') {
       const pageWrap = document.getElementById('page-wrap')
       if (pageWrap) {
-        // Force initial opacity to 0
+        // Reset initial state
         pageWrap.style.opacity = '0'
+        pageWrap.classList.remove('fade-in')
         
-        // Small delay to ensure opacity is set before animation
-        requestAnimationFrame(() => {
-          pageWrap.style.opacity = ''  // Remove inline opacity to let CSS animation take over
+        // Trigger fade-in with a small delay
+        setTimeout(() => {
+          pageWrap.style.removeProperty('opacity')
+          pageWrap.classList.add('fade-in')
           sessionStorage.removeItem('needsFadeIn')
-        })
+        }, 50)
       }
     }
   }, [])
