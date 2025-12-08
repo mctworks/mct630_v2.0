@@ -1,1 +1,1 @@
-export * from './NavMenuPlus'
+export { default, NavMenuPlus } from './NavMenuPlus'
