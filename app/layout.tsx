@@ -7,6 +7,7 @@ import { MakeswiftProvider } from '@/lib/makeswift/provider'
 import { MakeswiftComponent } from '@makeswift/runtime/next'
 import { getSiteVersion } from '@makeswift/runtime/next/server'
 import { ThemeConfig } from '@/components/ThemeConfig/ThemeConfig'
+import NavMenuPlus from '@/components/NavMenuPlus/NavMenuPlus'
 import './globals.css'
 
 const body = Inter({
@@ -48,24 +49,39 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const navSnapshot = await client.getComponentSnapshot(
+  // Nav Snapshot fetch
+  let navSnapshot = null
+  try {
+  navSnapshot = await client.getComponentSnapshot(
     'global-nav-menu',
-    { siteVersion: getSiteVersion() }
+    { siteVersion: await getSiteVersion() }
   )
-  
+} catch (err) {
+  console.warn('Could not fetch navSnapshot:', err)
+}
+
   return (
     <html lang="en">
       <body className={`${body.variable} ${heading.variable} ${mono.variable} ${ztGatha.variable}`}>
-        <div id="outer-container" className="outer-container">
+        {/* Remove inline styles - let CSS handle this */}
+        <div id="outer-container">
           <MakeswiftProvider siteVersion={await getSiteVersion()}>
             <ThemeConfig>
-              <MakeswiftComponent
-                snapshot={navSnapshot}
-                label="Nav Menu Plus"
-                type="navigation"
-              />
+              {navSnapshot ? (
+                <MakeswiftComponent snapshot={navSnapshot} label="Nav Menu Plus" type="navigation"/>
+              ) : (
+                <NavMenuPlus 
+                  className="global-nav"
+                  logo={undefined}
+                  links={undefined}
+                  headerBar={undefined}
+                />
+              )}
+              
               <main id="page-wrap" className="page-wrap">
-                {children}
+                <div id="page-wrap-inner" className="page-wrap-inner">
+                  {children}
+                </div>
               </main>
             </ThemeConfig>
           </MakeswiftProvider>

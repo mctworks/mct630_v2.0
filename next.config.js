@@ -4,7 +4,8 @@ const withMakeswift = createWithMakeswift()
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
+  fileTracingRoot: __dirname,
+  turbopack: {},
   images: {
     remotePatterns: [
       {

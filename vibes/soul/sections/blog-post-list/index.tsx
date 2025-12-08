@@ -3,9 +3,9 @@ import { clsx } from 'clsx'
 import { Stream, Streamable } from '@/vibes/soul/lib/streamable'
 import {
   type BlogPost,
-  BlogPostCard,
   BlogPostCardSkeleton,
 } from '@/vibes/soul/primitives/blog-post-card'
+import { BlogPostCardClient } from '@/vibes/soul/primitives/blog-post-card/blog-post-card-client'
 import * as Skeleton from '@/vibes/soul/primitives/skeleton'
 
 export interface BlogPostListProps {
@@ -57,7 +57,7 @@ export function BlogPostList({
           <div className={clsx('@container', className)}>
             <div className="mx-auto grid grid-cols-1 gap-x-5 gap-y-8 @md:grid-cols-2 @xl:gap-y-10 @3xl:grid-cols-3">
               {blogPosts.map(({ ...post }) => (
-                <BlogPostCard key={post.href} {...post} />
+                <BlogPostCardClient key={post.href} {...post} />
               ))}
             </div>
           </div>
