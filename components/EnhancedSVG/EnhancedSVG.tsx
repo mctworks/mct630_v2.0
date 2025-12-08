@@ -13,7 +13,7 @@ interface EnhancedSVGProps {
   gradientStartColor?: string
   gradientEndColor?: string
   gradientDuration?: number
-  resetDuration?: number // NEW PROP
+  resetDuration?: number 
   logoStrokeWidth?: number
   animatePaths?: string[] | string
 }
@@ -45,7 +45,10 @@ export function EnhancedSVG({
       return animatePaths
     }
     if (typeof animatePaths === 'string') {
-      return animatePaths === 'all' ? ['all'] : animatePaths.split(',').map(p => p.trim()).filter(Boolean)
+      const trimmed = animatePaths.trim()
+      if (trimmed === 'all') return ['all']
+      if (trimmed === 'none') return []
+      return trimmed.split(',').map(p => p.trim()).filter(Boolean)
     }
     return ['all']
   }, [animatePaths])
@@ -181,10 +184,37 @@ export function EnhancedSVG({
     let elementsToAnimate: Element[] = []
     if (normalizedAnimatePaths.includes('all')) {
       elementsToAnimate = Array.from(svgEl.querySelectorAll('path, line, polyline, polygon, circle, rect, ellipse'))
+    } else if (normalizedAnimatePaths.length === 0) {
+      elementsToAnimate = []
     } else {
-      elementsToAnimate = normalizedAnimatePaths
-        .map(id => svgEl.querySelector(`#${id}`))
-        .filter(Boolean) as Element[]
+      const selected: Element[] = []
+      normalizedAnimatePaths.forEach(id => {
+        const cleanId = id.replace(/^#/, '').trim()
+        if (!cleanId) return
+        // Exact match
+        try {
+          const exact = svgEl.querySelector(`#${CSS.escape(cleanId)}`)
+          if (exact) {
+            selected.push(exact)
+            return
+          }
+        } catch (err) {
+          // ignore
+        }
+        // Ends with match for IDs like foo-path-abc
+        const ends = Array.from(svgEl.querySelectorAll('[id]')).filter(el => el.id.endsWith(`-${cleanId}`) || el.id.endsWith(`_${cleanId}`) || el.id === cleanId)
+        if (ends.length > 0) {
+          ends.forEach(el => selected.push(el))
+          return
+        }
+        // Fallback include match
+        const includes = Array.from(svgEl.querySelectorAll('[id]')).filter(el => el.id.includes(cleanId))
+        if (includes.length > 0) {
+          includes.forEach(el => selected.push(el))
+          return
+        }
+      })
+      elementsToAnimate = selected
     }
 
     console.log(`🔍 Found ${elementsToAnimate.length} elements to animate`)

@@ -1,4 +1,3 @@
-/*EnhancedSVG.makeswift.ts*/
 import { runtime } from '@/lib/makeswift/runtime'
 import { 
   Style, 
@@ -63,7 +62,7 @@ runtime.registerComponent(EnhancedSVG, {
     }),
     animatePaths: TextInput({
       label: 'Paths to animate',
-      description: 'Use "all" for entire SVG, or specific element IDs',
+      description: 'Use "all" for entire SVG, "none" to skip path drawing, or specific element IDs',
       defaultValue: 'all',
     }),
   },
