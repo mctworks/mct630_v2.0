@@ -731,6 +731,12 @@ html, body {
   background-color: var(--color-menubg);
 }
 
+@media screen and (max-width: 768px) {
+  #outer-container {
+    overflow: hidden
+  }
+}
+
 #page-wrap {
   position: relative;
   min-height: 100vh;
