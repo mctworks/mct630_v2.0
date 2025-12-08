@@ -699,6 +699,12 @@ body *,
   pointer-events: auto;
 }
 
+/* Ensure the Dark/Light Theme button background is the correct color*/
+.theme-toggle{
+  background-color: var(--color-background);
+  border: none;
+}
+
 /* Fix button positioning relative to container */
 .nav-container .bm-burger-button {
   position: relative;
