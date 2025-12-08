@@ -2,19 +2,27 @@ import React from 'react'
 
 import { useContentfulData } from '@/lib/contentful/provider'
 import { formatBlog } from '@/lib/contentful/utils'
+import type { QueriedBlogPost } from '@/lib/contentful/utils'
 import { BlogPostContent } from '@/vibes/soul/sections/blog-post-content'
 import { SectionLayout } from '@/vibes/soul/sections/section-layout'
 
 interface Props {
   children: React.ReactNode
 }
+
 export default function BlogContentWithSlot({ children }: Props) {
   const { data: blogs } = useContentfulData()
   if (!blogs || !Array.isArray(blogs) || blogs.length === 0) {
     return <div>No blog posts available</div>
   }
-  console.log('🚀 ~ BlogContentWithSlot ~ data:', blogs)
-  const blog = blogs[0]
+
+  const validBlogs = blogs.filter((b): b is QueriedBlogPost => b != null)
+  if (validBlogs.length === 0) {
+    return <div>No blog posts available</div>
+  }
+
+  console.log('🚀 ~ BlogContentWithSlot ~ data:', validBlogs)
+  const blog = validBlogs[0]
   const formattedBlog = formatBlog(blog)
   const breadcrumbs = [
     {
@@ -29,7 +37,7 @@ export default function BlogContentWithSlot({ children }: Props) {
     },
     {
       id: '3',
-      label: formattedBlog.title,
+      label: formattedBlog.title ?? 'Untitled',
       href: '#',
     },
   ]

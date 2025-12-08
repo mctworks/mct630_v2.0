@@ -8,6 +8,8 @@ import { BlogPost } from '@/vibes/soul/primitives/blog-post-card'
 
 import { QueriedBlogPost } from './fetchers'
 
+export type { QueriedBlogPost }
+
 type FieldPath = { label: string; path: string; type?: string | null }
 
 export type ResolvedField = { data: unknown } | { error: string }
@@ -94,6 +96,11 @@ export const formatBlog = (blog: QueriedBlogPost, includeBody: boolean = true): 
   if (!blog.title || !blog.publishDate || !blog.body || !blog.banner?.url || !blog.body?.json) {
     throw new Error('Blog post is missing required fields: title, publishDate, or body')
   }
+
+  if (!isRichText(blog.body)) {
+    throw new Error('### Blog post body is not a rich text document')
+  }
+
   return {
     title: blog.title,
     date: new Date(blog.publishDate).toLocaleDateString('en-US', {
