@@ -1,7 +1,4 @@
-@import 'tailwindcss';
-
-@plugin 'tailwindcss-animate';
-@plugin '@tailwindcss/typography';
+/*@import 'tailwindcss';*/
 
 @theme inline {
   --color-primary: var(--primary);
@@ -114,7 +111,7 @@
   --animate-scroll: scroll 200ms infinite linear both;
   --animate-scrollLeft: scrollLeft var(--marquee-duration) linear infinite;
   --animate-shake: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
-  --animate-slideIn: slideIn 800ms cubic-bezier(0.25, 1, 0, 1);
+  --animate-slideIn: slideIn 800ms cubic-bezier(0.25, 1, 0, 1); 
 
   @keyframes collapse {
     from {
@@ -248,6 +245,26 @@
     }
     to {
       opacity: 1;
+    }
+  }
+
+  @keyframes pageTransition {
+    from {
+      transform: scale(1) rotate(0deg);
+      opacity: 1;
+    }
+    to {
+      transform: scale(var(--scale, 1)) rotate(var(--rotation, 0deg));
+      opacity: 0;
+    }
+  }
+
+  @keyframes pageBackgroundFade {
+    from {
+      background-color: transparent;
+    }
+    to {
+      background-color: var(--color-menubg);
     }
   }
 }
@@ -429,7 +446,7 @@
 */
 
 /* 
-  NavMenuPlus - styles for the burger menu and page transitions
+  TransitionLink - Animated page transition component
 */
 .page-wrap {
   position: relative;
@@ -440,66 +457,64 @@
   transform-style: preserve-3d;
   backface-visibility: hidden;
   will-change: transform, opacity;
-  transform: none; /* Reset any transforms */
+  transform: none;
   opacity: 0;
-  animation: none; /* Don't auto-animate on mount */
+  animation: none;
 }
 
-/* Apply fade-in animation when the .fade-in class is present */
 .page-wrap.fade-in {
   animation: fadeIn 0.5s ease-in forwards;
 }
 
 .page-wrap.transitioning {
-  transition: all 0.5s ease;
   animation: pageTransition var(--transition-duration) cubic-bezier(0.645, 0.045, 0.355, 1.000) forwards;
   pointer-events: none;
 }
 
-/* Remove the existing transition properties since we're using animation */
-.page-wrap.transitioning {
-  transition: none;
+#page-wrap {
+  position: relative;
+  min-height: 100%;
+  opacity: 1;
+  transition: opacity 0.45s ease-in;
 }
 
+#page-wrap {
+  position: relative;
+  min-height: 100vh;
+  overflow: visible;
+}
+
+.actraiser-drop-container {
+  position: relative;
+  cursor: pointer;
+}
+
+.actraiser-drop-link {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.actraiser-drop-link img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* 
+  NavMenuPlus - Burger menu component powered by react-burger-menu
+*/
 .outer-container {
   position: relative;
   height: 100%;
   overflow-x: hidden;
 }
 
-/* The burger menu needs to be above other content */
-.bm-menu-wrap {
-  position: sticky;
-  height: 100%;
-  z-index: 1100;
+.nav-menu-plus {
+  right: 1rem !important;
+  position: fixed;
 }
 
-/* The overlay when menu is open */
-.bm-overlay {
-  background: rgba(0, 0, 0, 0.3);
-  z-index: 1000;
-}
-
-/*
-Sidebar wrapper styles
-Note: Beware of modifying this element as it can break the animations - you should not need to touch it in most cases
-*/
-
-.nav-menu-plus{
-  right: 1rem !important; /* Adjust the distance from the right edge */
-  position: sticky;
-}
-
-.bm-menu-wrap {
-  max-height: 100vh;
-  overflow-y: hidden;
-  width: 100%;
-  top: 0;
-  height: 65vh !important;
-  position: sticky;
-}
-
-/* Position and sizing of burger button */
 .bm-burger-button {
   position: sticky;
   width: 26px;
@@ -508,54 +523,82 @@ Note: Beware of modifying this element as it can break the animations - you shou
   top: 26px;
 }
 
-/* Color/shape of burger icon bars */
 .bm-burger-bars {
-  /* Use theme-aware nav icon color instead of a hard-coded value */
   background: var(--makeswift-text);
 }
 
-/* Color/shape of burger icon bars on hover*/
 .bm-burger-bars-hover {
   background: #00a984ff;
 }
 
-/* Position and sizing of clickable cross button */
 .bm-cross-button {
   height: 24px;
   width: 24px;
 }
 
-/* Color/shape of close button cross */
 .bm-cross {
   background: #d8efffff;
 }
 
-/* General sidebar styles */
+.bm-menu-wrap {
+  position: sticky;
+  height: 100%;
+  z-index: 1100;
+}
+
 .bm-menu {
-  background: #0068ffdb;
+  background: var(--color-primary);
   padding: 0.5rem 0.5rem 0;
   font-size: 2.25rem;
   border: #fff 1px solid;
+  height: auto !important; 
+  max-height: 85vh; 
+  overflow: hidden !important; 
 }
 
-/* Wrapper for item list */
 .bm-item-list {
   padding: 0.25em;
-  height: 50% !important;
-  display: table-caption;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  overflow-y: visible !important;
+  overflow-x: hidden;
+  max-height: none !important;
 }
 
-/* Individual item */
-.bm-item {
-  display: inline-grid;
+.bm-item,
+.menu-item,
+a.menu-item {
+  display: block;
   font-family: var(--font-family-zt-gatha), serif;
   font-weight: 600;
   text-decoration: none;
+  color: #ffffff;
+  padding: 0.25rem 0;
+  transition: opacity 0.3s ease;
+}
+
+a.menu-item {
+  cursor: pointer;
+}
+
+a.menu-item:hover,
+.menu-item:hover {
+  opacity: 0.7;
+}
+
+.bm-overlay {
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+}
+
+body.bm-overlay {
+  overflow: hidden !important;
 }
 
 .nav-status-box {
   position: relative;
-  width: auto;
+  width: inherit;
   text-align: left;
   padding: 0.5em 0;
   z-index: 1000;
@@ -564,7 +607,6 @@ Note: Beware of modifying this element as it can break the animations - you shou
   font-weight: 700;
   line-height: 1.2;
   box-sizing: border-box;
-  width: 100%;
 }
 
 .nav-status-text {
@@ -574,46 +616,6 @@ Note: Beware of modifying this element as it can break the animations - you shou
   line-height: 1.2;
   box-sizing: border-box;
   width: 100%;
-  /* text-shadow: 1px 0 1px #b3b3b3, 
-  0 -1px 1px #B3B3B1, 
-  -5px 4px 15px rgba(0, 0, 0, 0.4), 
-  -3px -2px 2px rgba(0, 0, 0, 0.4) */
-}
-
-/* Default for when the menu closes */
-#page-wrap {
-  filter: none;
-  transition: filter 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  will-change: filter;
-}
-
-/* ActraiserFall styles */
-.actraiser-fall-container {
-  position: relative;
-  cursor: pointer;
-}
-
-.actraiser-fall-link {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-.actraiser-fall-link img {
-  max-width: 100%;
-  height: auto;
-  display: block;
-}
-
-@keyframes pageTransition {
-  from {
-    transform: none;
-    opacity: 1;
-  }
-  to {
-    transform: scale(var(--scale)) rotate(var(--rotation));
-    opacity: 0;
-  }
 }
 
 /* 
@@ -684,14 +686,16 @@ body *,
   padding: 1rem;
   display: flex;
   justify-content: flex-end;
-  pointer-events: none; /* Let clicks pass through to content except for menu */
+  /* Allow clicks so Makeswift links and menu internals are interactive */
+  pointer-events: auto;
 }
 
-/* Ensure menu components receive clicks */
+/* Ensure menu components receive clicks (explicit children kept for safety) */
 .nav-container .bm-burger-button,
 .nav-container .bm-menu-wrap,
 .nav-container .bm-menu,
-.nav-container .nav-status-box, .theme-toggle {
+.nav-container .nav-status-box,
+.theme-toggle {
   pointer-events: auto;
 }
 
@@ -702,4 +706,39 @@ body *,
   top: 0;
 }
 
-/*EnahncedSVG*/
+/* When nav menu is open, block page transition animation so react-burger-menu
+   can apply its translate3d transform without being overridden by the
+   pageTransition animation from the transition system. */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  /* Allow normal scrolling */
+  overflow: visible;
+}
+
+#outer-container {
+  position: relative;
+  min-height: 100vh;
+  /* Allow normal scrolling */
+  overflow: visible;
+  background-color: var(--color-menubg);
+}
+
+#page-wrap {
+  position: relative;
+  min-height: 100vh;
+  /* Allow normal scrolling */
+  overflow: visible;
+}
+
+.bm-menu-wrap ~ #page-wrap {
+  transform-origin: center center;
+  transition: transform 0.5s;
+}
+
+/* Make the overlay use your menu background color */
+.bm-overlay {
+  background: var(--color-menubg) !important;
+  z-index: 1000;
+}
