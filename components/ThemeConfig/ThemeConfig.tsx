@@ -15,6 +15,7 @@ interface ThemeContextType {
     text: string
     primary: string
     secondary: string
+    navlist?: string
   }
 }
 
@@ -52,6 +53,7 @@ interface ThemeConfigProps {
   darkSubtext?: string
   darkPrimary?: string
   darkSecondary?: string
+  navList?: string
 }
 
 export function ThemeConfig({
@@ -64,7 +66,6 @@ export function ThemeConfig({
   lightNavGlow4 = 'rgba(0, 0, 0, 0.4)',
   lightText = '#000000',
   lightSubtext = '#4d464cff',
-  lightPrimary = '#0068ffdb',
   lightSecondary = '#4a4a4a',
   darkMenuBG = "#000000",
   darkNavGlow1 = '#4d4d4dff',
@@ -74,8 +75,8 @@ export function ThemeConfig({
   darkBackground = '#1d1c24ff',
   darkText = '#ffffff',
   darkSubtext = '#b9a9c0ff',
-  darkPrimary = '#0068ffdb',
-  darkSecondary = '#908fa0ff'
+  darkSecondary = '#908fa0ff',
+  navList = '#0068ffdb',
 }: ThemeConfigProps) {
   const [isDark, setIsDark] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -113,25 +114,27 @@ export function ThemeConfig({
           background: darkBackground,
           text: darkText,
           subtext: darkSubtext,
-          primary: darkPrimary,
+          primary: lightBackground,
           secondary: darkSecondary,
           menubg: darkMenuBG,
           navglow1: darkNavGlow1,
           navglow2: darkNavGlow2,
           navglow3: darkNavGlow3,
           navglow4: darkNavGlow4,
+          navlist: navList,
         }
       : {
           background: lightBackground,
           text: lightText,
           subtext: lightSubtext,
-          primary: lightPrimary,
+          primary: darkBackground,
           secondary: lightSecondary,
           menubg: lightMenuBG,
           navglow1: lightNavGlow1,
           navglow2: lightNavGlow2,
           navglow3: lightNavGlow3,
           navglow4: lightNavGlow4,
+          navlist: navList,
         }
 
     // Apply colors as CSS variables with !important
@@ -210,10 +213,15 @@ div:not([style*="background"]):not(.outer-container):not(.bm-menu):not(.nav-stat
 }
 
 .bm-menu {
-  background: ${colors.primary} !important;
+  background: ${colors.navlist} !important;
   border: ${colors.text} 1px solid !important;
   color: "#ffffff" !important;
 }
+
+.bm-menu-item {
+  color: "#ffffff" !important;
+}
+
 
 .nav-status-box {
   background-color: ${colors.menubg} !important;
@@ -242,8 +250,11 @@ div:not([style*="background"]):not(.outer-container):not(.bm-menu):not(.nav-stat
   }, [
     mounted,
     isDark,
-    lightBackground, lightText, lightPrimary, lightSecondary, lightMenuBG,
-    darkBackground, darkText, darkPrimary, darkSecondary, darkMenuBG
+    lightBackground, lightText, lightSecondary, lightMenuBG,
+    darkBackground, darkText, darkSecondary, darkMenuBG,
+    lightNavGlow1, lightNavGlow2, lightNavGlow3, lightNavGlow4,
+    darkNavGlow1, darkNavGlow2, darkNavGlow3, darkNavGlow4,
+    navList
   ])
 
   const toggleTheme = () => setIsDark(prev => !prev)
@@ -257,8 +268,9 @@ div:not([style*="background"]):not(.outer-container):not(.bm-menu):not(.nav-stat
         navglow3: darkNavGlow3,
         navglow4: darkNavGlow4,
         text: darkText,
-        primary: darkPrimary,
+        primary: lightBackground,
         secondary: darkSecondary,
+        navlist: navList,
       }
     : {
         background: lightBackground,
@@ -268,8 +280,9 @@ div:not([style*="background"]):not(.outer-container):not(.bm-menu):not(.nav-stat
         navglow3: lightNavGlow3,
         navglow4: lightNavGlow4,
         text: lightText,
-        primary: lightPrimary,
+        primary: darkBackground,
         secondary: lightSecondary,
+        navlist: navList,
       }
 
   // Prevent flash of wrong theme
