@@ -39,15 +39,12 @@ export function TransitionLink({
   const router = useRouter()
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // Effect to handle initial page load animation with improved timing
   useEffect(() => {
     const pageWrap = document.getElementById('page-wrap')
     if (pageWrap) {
-      // Force initial state
       pageWrap.style.opacity = '0'
       pageWrap.classList.remove('fade-in')
       
-      // Add a small delay to ensure the opacity is applied
       setTimeout(() => {
         pageWrap.style.removeProperty('opacity')
         pageWrap.classList.add('fade-in')
@@ -55,12 +52,9 @@ export function TransitionLink({
     }
   }, [])
 
-  // Enhanced cleanup effect
   useEffect(() => {
-    // Reset page-wrap styles when component mounts
     const pageWrap = document.getElementById('page-wrap')
     if (pageWrap) {
-      // Clear any existing transition classes and properties
       pageWrap.classList.remove('transitioning')
       pageWrap.style.removeProperty('--scale')
       pageWrap.style.removeProperty('--rotation')
@@ -72,7 +66,6 @@ export function TransitionLink({
       })
     }
 
-    // Add cleanup for page unload
     const cleanup = () => {
       if (pageWrap) {
         pageWrap.classList.remove('transitioning')
@@ -100,7 +93,6 @@ export function TransitionLink({
       return
     }
 
-    // If pageWrap exists, calculate click position relative to its bounding rect
     let xPercent = 50
     let yPercent = 50
     try {
@@ -111,32 +103,25 @@ export function TransitionLink({
         xPercent = (px / rect.width) * 100
         yPercent = (py / rect.height) * 100
       } else {
-        // Fallback to viewport percentages
         xPercent = (e.clientX / window.innerWidth) * 100
         yPercent = (e.clientY / window.innerHeight) * 100
       }
     } catch (err) {
-      // Keep sensible defaults if anything goes wrong
       xPercent = 50
       yPercent = 50
     }
 
-    // Clear any existing transition state first
     pageWrap.classList.remove('transitioning')
-    void pageWrap.offsetWidth // Force reflow
+    void pageWrap.offsetWidth
 
-    // Set new animation properties
     pageWrap.style.setProperty('--scale', String(zoomScale))
     pageWrap.style.setProperty('--rotation', `${rotationSpeed}deg`)
     pageWrap.style.setProperty('--transition-duration', `${transitionDuration}s`)
     pageWrap.style.transformOrigin = `${xPercent}% ${yPercent}%`
 
-    // Add transitioning class to trigger animation
     pageWrap.classList.add('transitioning')
 
-    // Wait for animation to complete before navigation
     setTimeout(() => {
-      // Store animation state in sessionStorage
       sessionStorage.setItem('needsFadeIn', 'true')
       router.push(href.href)
     }, transitionDuration * 1000)
@@ -157,7 +142,6 @@ export function TransitionLink({
         return
       }
 
-      // Dynamically import GSAP
       import('gsap').then(({ gsap }) => {
         performLogoSplashAnimation(gsap, container)
       }).catch(error => {
@@ -172,7 +156,6 @@ export function TransitionLink({
 
   const performLogoSplashAnimation = useCallback((gsap: any, container: HTMLDivElement) => {
     try {
-      
       const svg = container.querySelector<SVGElement>('#logo') || container.querySelector<SVGElement>('svg')
       
       if (!svg) {
@@ -199,6 +182,13 @@ export function TransitionLink({
       clonedSvg.style.width = 'min(60vw, 300px)'
       clonedSvg.style.height = 'min(60vh, 300px)'
       
+      // Remove any theme-related filters or styles from cloned SVG
+      clonedSvg.removeAttribute('filter')
+      const allClonedElements = clonedSvg.querySelectorAll('*')
+      allClonedElements.forEach(el => {
+        el.removeAttribute('filter')
+      })
+      
       overlay.appendChild(clonedSvg)
       document.body.appendChild(overlay)
 
@@ -206,22 +196,20 @@ export function TransitionLink({
         defaults: { ease: 'power2.inOut' } 
       })
 
-      // Parse animated paths like EnhancedSVG
+      // Parse animated paths
       const normalizedAnimatePaths = !animatedPathId || animatedPathId === 'all' 
-        ? ['all'] 
+        ? [] // If "all", we don't animate any specific paths
         : String(animatedPathId).split(',').map(p => p.trim()).filter(Boolean)
 
       // Find ONLY the specified paths for line animation
       let pathsToAnimate: SVGPathElement[] = []
-      if (normalizedAnimatePaths.includes('all')) {
-        pathsToAnimate = Array.from(clonedSvg.querySelectorAll('path'))
-      } else if (normalizedAnimatePaths.length > 0) {
+      if (normalizedAnimatePaths.length > 0 && !normalizedAnimatePaths.includes('none')) {
         const selected: SVGPathElement[] = []
         normalizedAnimatePaths.forEach(id => {
           const cleanId = id.replace(/^#/, '').trim()
           if (!cleanId) return
           
-          // Level 1: Exact match
+          // Exact match
           try {
             const exact = clonedSvg.querySelector(`#${CSS.escape(cleanId)}`)
             if (exact && exact instanceof SVGPathElement) {
@@ -232,7 +220,7 @@ export function TransitionLink({
             // ignore
           }
           
-          // Level 2: Ends-with match for IDs like foo-path-abc
+          // Ends-with match
           const ends = Array.from(clonedSvg.querySelectorAll('[id]')).filter(el => 
             el.id.endsWith(`-${cleanId}`) || el.id.endsWith(`_${cleanId}`) || el.id === cleanId
           ) as SVGPathElement[]
@@ -241,7 +229,7 @@ export function TransitionLink({
             return
           }
           
-          // Level 3: Fallback include match
+          // Includes match
           const includes = Array.from(clonedSvg.querySelectorAll('[id]')).filter(el => 
             el.id.includes(cleanId)
           ) as SVGPathElement[]
@@ -253,32 +241,21 @@ export function TransitionLink({
         pathsToAnimate = selected
       }
 
-      // Find animated path groups (for skip checking)
-      const animatedPathAncestors = new Set<Element>()
-      pathsToAnimate.forEach(path => {
-        let parent = path.parentElement as Element | null
-        while (parent && parent !== (clonedSvg as unknown as Element)) {
-          animatedPathAncestors.add(parent)
-          parent = parent.parentElement
-        }
-      })
+      // Create a Set for quick lookup of animated paths
+      const animatedPathSet = new Set(pathsToAnimate)
 
-      // Find all other visible shapes (excluding animated paths and their groups)
+      // Find ALL visible elements for color wave (everything except animated paths)
       const allElements = Array.from(clonedSvg.querySelectorAll<SVGElement>('*'))
-      const otherShapes = allElements.filter(el => {
+      const elementsForColorWave = allElements.filter(el => {
         // Skip if it's one of our animated paths
-        if (pathsToAnimate.includes(el as SVGPathElement)) return false
-        
-        // Skip if it's an ancestor/group of animated paths
-        if (animatedPathAncestors.has(el)) return false
+        if (animatedPathSet.has(el as SVGPathElement)) return false
         
         const tagName = el.tagName.toLowerCase()
-        // Include all shape elements but NOT groups (groups can contain animated paths)
-        if (!['path', 'circle', 'rect', 'polygon', 'ellipse', 'text'].includes(tagName)) return false
+        // Skip defs and other non-visual elements
+        if (['defs', 'clippath', 'mask', 'pattern', 'lineargradient', 'radialgradient', 'stop', 'filter', 'g', 'svg'].includes(tagName)) return false
         
-        // Check if element is visible
-        const style = window.getComputedStyle(el)
-        return style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0'
+        // Include ALL visual elements
+        return true
       })
 
       // Set initial states
@@ -288,11 +265,16 @@ export function TransitionLink({
         transformOrigin: 'center center' 
       })
 
-      // Hide animated paths and other shapes initially
+      // Hide ONLY animated paths initially
       gsap.set(pathsToAnimate, { opacity: 0 })
-      gsap.set(otherShapes, { opacity: 0 })
 
-      // DUAL-ENDED PATH ANIMATION for specified paths only
+      // 1. Fade in SVG
+      tl.to(clonedSvg, { 
+        duration: 0.5, 
+        scale: 1
+      })
+
+      // 2. DUAL-ENDED PATH ANIMATION for specified paths only
       if (pathsToAnimate.length > 0) {
         // Create gradient for the animated paths
         const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs')
@@ -306,13 +288,13 @@ export function TransitionLink({
         gradient.innerHTML = `
           <stop offset="0%" stop-color="${gradientStart}"/>
           <stop offset="50%" stop-color="${gradientEnd}"/>
-          <stop offset="100%" stop-color="#c0c0c0"/>
+          <stop offset="100%" stop-color="${gradientStart}"/>
         `
         
         defs.appendChild(gradient)
         clonedSvg.insertBefore(defs, clonedSvg.firstChild)
 
-        const animatedPathPairs: Array<{path1: SVGPathElement, path2: SVGPathElement, original: SVGPathElement}> = []
+        const animatedPathPairs: Array<{path1: SVGPathElement, path2: SVGPathElement, original: SVGPathElement, pathLength: number}> = []
 
         pathsToAnimate.forEach(originalPath => {
           if (!('getTotalLength' in originalPath)) return
@@ -333,116 +315,146 @@ export function TransitionLink({
           // Hide the original path
           originalPath.style.display = 'none'
 
-          // Style the animated paths
+          // Style the animated paths - use gradient stroke
           gsap.set([path1, path2], { 
             stroke: 'url(#splash-gradient)',
             strokeWidth: strokeWidth,
             fill: 'none',
-            opacity: 0  // Initially hidden until animation starts
+            opacity: 0
           })
 
-          // Set up dual-ended animation
+          // Set up dual-ended animation - FULL path length for each
           gsap.set([path1, path2], { 
-            strokeDasharray: pathLength / 2
+            strokeDasharray: pathLength
           })
 
-          // Path1 animates from start to middle
+          // Path1 animates from START (0) to MIDDLE
           gsap.set(path1, { 
-            strokeDashoffset: -pathLength / 2
+            strokeDashoffset: pathLength // Start hidden at the end
           })
 
-          // Path2 animates from end to middle  
+          // Path2 animates from END to MIDDLE  
           gsap.set(path2, { 
-            strokeDashoffset: pathLength / 2
+            strokeDashoffset: -pathLength // Start hidden at the beginning
           })
 
-          animatedPathPairs.push({ path1, path2, original: originalPath })
+          animatedPathPairs.push({ path1, path2, original: originalPath, pathLength })
         })
 
-        // 1. Fade in SVG
-        tl.to(clonedSvg, { 
-          duration: 0.5, 
-          scale: 1
-        })
-
-        // 2. DUAL-ENDED ANIMATION - all specified paths animate toward center
-        animatedPathPairs.forEach(({ path1, path2 }, pairIndex) => {
+        // Animate all path pairs simultaneously - both converge to center
+        animatedPathPairs.forEach(({ path1, path2, pathLength }, pairIndex) => {
           const startLabel = pairIndex === 0 ? '-=0' : '-=1.2'
           
-          // Show the cloned paths at the start of animation
+          // Show the cloned paths
           tl.to([path1, path2], {
             duration: 0,
             opacity: 1
           }, startLabel)
           
+          // Path1: animate from start to middle (dashoffset: pathLength -> pathLength/2)
           tl.to(path1, {
             duration: 1.2,
-            strokeDashoffset: 0,
+            strokeDashoffset: pathLength / 2,
             ease: "power2.out"
           }, startLabel)
 
+          // Path2: animate from end to middle (dashoffset: -pathLength -> -pathLength/2)
           tl.to(path2, {
             duration: 1.2, 
-            strokeDashoffset: 0,
+            strokeDashoffset: -pathLength / 2,
             ease: "power2.out"
           }, '-=1.2')
         })
-
-      } else {
-        // Fallback if no paths found
-        tl.to(clonedSvg, { 
-          duration: 0.5, 
-          scale: 1
-        })
       }
 
-      // 3. WAVE COLOR EFFECT for other shapes (top to bottom) - ALWAYS apply for non-animated elements
-      if (otherShapes.length > 0) {
-        // Filter out path elements from wave effect (we handle paths separately)
-        const nonPathShapes = otherShapes.filter(el => el.tagName.toLowerCase() !== 'path')
-        
-        if (nonPathShapes.length > 0) {
-          // Sort shapes by vertical position for wave effect
-          const sortedShapes = nonPathShapes.sort((a, b) => {
-            const rectA = a.getBoundingClientRect()
-            const rectB = b.getBoundingClientRect()
-            return rectA.top - rectB.top
-          })
+      // 3. WAVE COLOR EFFECT for ALL visual elements
+      if (elementsForColorWave.length > 0) {
+        // Sort by vertical position (top to bottom)
+        const sortedShapes = [...elementsForColorWave].sort((a, b) => {
+          const rectA = a.getBoundingClientRect()
+          const rectB = b.getBoundingClientRect()
+          return rectA.top - rectB.top
+        })
 
-          // Show shapes with wave effect (staggered from top to bottom)
-          sortedShapes.forEach((shape, index) => {
+        // Create filters for images (EnhancedSVG approach)
+        const defs = clonedSvg.querySelector('defs') || document.createElementNS('http://www.w3.org/2000/svg', 'defs')
+        if (!clonedSvg.querySelector('defs')) {
+          clonedSvg.insertBefore(defs, clonedSvg.firstChild)
+        }
+        
+        const startFilterId = 'wave-start-' + Math.random().toString(36).substr(2, 9)
+        const startFilter = document.createElementNS('http://www.w3.org/2000/svg', 'filter')
+        startFilter.id = startFilterId
+        startFilter.innerHTML = `
+          <feFlood flood-color="${gradientStart}" result="flood"/>
+          <feComposite in="flood" in2="SourceAlpha" operator="in" result="colored"/>
+          <feBlend in="colored" in2="SourceGraphic" mode="multiply"/>
+        `
+        defs.appendChild(startFilter)
+        
+        const endFilterId = 'wave-end-' + Math.random().toString(36).substr(2, 9)
+        const endFilter = document.createElementNS('http://www.w3.org/2000/svg', 'filter')
+        endFilter.id = endFilterId
+        endFilter.innerHTML = `
+          <feFlood flood-color="${gradientEnd}" result="flood"/>
+          <feComposite in="flood" in2="SourceAlpha" operator="in" result="colored"/>
+          <feBlend in="colored" in2="SourceGraphic" mode="multiply"/>
+        `
+        defs.appendChild(endFilter)
+
+        // Wave starts AFTER path animation (1.2s)
+        const waveStart = 1.2
+        const waveDuration = 0.4
+        const stagger = waveDuration / Math.max(sortedShapes.length, 1)
+
+        // Single wave from top to bottom
+        sortedShapes.forEach((shape, index) => {
+          const tagName = shape.tagName.toLowerCase()
+          const computedStyle = window.getComputedStyle(shape)
+          const hasFill = computedStyle.fill && computedStyle.fill !== 'none'
+          const hasStroke = computedStyle.stroke && computedStyle.stroke !== 'none'
+          
+          const elementStart = waveStart + (index * stagger)
+          
+          if (tagName === 'image') {
+            // Images: gradientStart → gradientEnd
             tl.to(shape, {
               duration: 0.1,
-              opacity: 1,
-              fill: gradientStart,
+              attr: { filter: `url(#${startFilterId})` },
               ease: "power2.out"
-            }, `+=${index * 0.05}`) // Staggered start for wave effect
-          })
-
-          // Color cycle through gradient
-          tl.to(sortedShapes, {
-            duration: 0.1,
-            fill: gradientEnd,
-          }, '+=0.1')
-
-          tl.to(sortedShapes, {
-            duration: 0.1,
-            fill: '#c0c0c0',
-          }, '+=0.1')
-
-          tl.to(sortedShapes, {
-            duration: 0.1,
-            fill: '', // Reset to original
-          }, '+=0.1')
-        }
+            }, elementStart)
+            
+            tl.to(shape, {
+              duration: 0.1,
+              attr: { filter: `url(#${endFilterId})` },
+              ease: "power2.inOut"
+            }, elementStart + 0.05)
+            
+          } else if (hasFill || hasStroke) {
+            // Regular shapes: gradientStart → gradientEnd
+            tl.to(shape, {
+              duration: 0.1,
+              fill: gradientStart,
+              stroke: gradientStart,
+              ease: "power2.out"
+            }, elementStart)
+            
+            tl.to(shape, {
+              duration: 0.1,
+              fill: gradientEnd,
+              stroke: gradientEnd,
+              ease: "power2.inOut"
+            }, elementStart + 0.05)
+          }
+        })
       }
-
+  
       // 4. ZOOM IN to cover screen
       tl.to(clonedSvg, { 
         duration: 1.2, 
         scale: splashScale * 3,
         ease: "power2.in"
-      })
+      }, '+=0.2')
 
       // 5. Navigate after zoom completes
       tl.eventCallback('onComplete', () => {
@@ -471,12 +483,11 @@ export function TransitionLink({
   const onClick = useCallback((e: React.MouseEvent) => {
     if (!href?.href) return
 
-    // Don't interfere if Makeswift animations are present
-  const target = e.currentTarget
-  if (target.hasAttribute('data-makeswift-animation') || 
-      target.closest('[data-makeswift-animation]')) {
-    return
-  }
+    const target = e.currentTarget
+    if (target.hasAttribute('data-makeswift-animation') || 
+        target.closest('[data-makeswift-animation]')) {
+      return
+    }
     
     e.preventDefault()
 
