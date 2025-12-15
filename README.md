@@ -14,7 +14,7 @@ Everything pushed to this repo is running on Vercel for those interested in seei
 
 ### CURRENT STATUS
 * Most of the major components and more permanent assets have been built, enough to where I feel confident showing it off. You can see NavMenuPlus, animated SVGs via EnhancedSVG, and TransitionLink's "Actraiser Drop" animation (the section links with a light blue border) on the front page. 
-* You can also see the progress on TransitionLink's "Logo Splash" animation by clicking the small MCT630 logo in the top left corner of the Nav bar.
+* There's a small demo of the "Logo Splash" TransitionLink animation you can access by clicking the MCT630 logo in the top right-hand corner of the nav bar. This animation is intended for use with navigational links where an Actraiser Drop wouldn't look right.
 * Blog with placeholder content is up, with the standard layout and animations on the blog post list page.
 * Portfolio and About pages are currently test pages with dummy content.
 
@@ -34,7 +34,7 @@ Everything pushed to this repo is running on Vercel for those interested in seei
 
 ### TransitionLink
 * Makeswift component for a hyperlinked Box with transition effect on click
-* One of two animations to choose from: Actraiser Drop and Logo Splash (Still in the works)
+* One of two animations to choose from: Actraiser Drop and Logo Splash
 * Link target, div container attributes, as well as animation zoom-in scale and spin rotation easily adjusted in Makeswift editor mode 
 
 ### EnhancedSVG
