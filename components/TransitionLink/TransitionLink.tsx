@@ -368,7 +368,7 @@ export function TransitionLink({
       }
 
       // 3. WAVE COLOR EFFECT for ALL visual elements
-      if (elementsForColorWave.length > 0) {
+     /*  if (elementsForColorWave.length > 0) {
         // Sort by vertical position (top to bottom)
         const sortedShapes = [...elementsForColorWave].sort((a, b) => {
           const rectA = a.getBoundingClientRect()
@@ -447,8 +447,156 @@ export function TransitionLink({
             }, elementStart + 0.05)
           }
         })
+      } */
+        // 3. WAVE COLOR EFFECT for ALL visual elements (respects transparency)
+      if (elementsForColorWave.length > 0) {
+        // Filter to only elements with visible fill/stroke
+        const visibleElements = elementsForColorWave.filter(el => {
+          const computedStyle = window.getComputedStyle(el)
+          const tagName = el.tagName.toLowerCase()
+          
+          // Skip elements that are completely transparent
+          if (parseFloat(computedStyle.opacity) === 0) return false
+          
+          // For images, always include (they're visible by default)
+          if (tagName === 'image') return true
+          
+          // Check fill visibility
+          const fill = computedStyle.fill
+          const hasVisibleFill = fill && 
+            fill !== 'none' && 
+            fill !== 'transparent' &&
+            !fill.startsWith('rgba(0,0,0,0') &&
+            !fill.startsWith('rgba(255,255,255,0')
+          
+          // Check stroke visibility
+          const stroke = computedStyle.stroke
+          const hasVisibleStroke = stroke && 
+            stroke !== 'none' && 
+            stroke !== 'transparent' &&
+            !stroke.startsWith('rgba(0,0,0,0') &&
+            !stroke.startsWith('rgba(255,255,255,0')
+          
+          // Include if has visible fill OR stroke
+          return hasVisibleFill || hasVisibleStroke
+        })
+        
+        if (visibleElements.length === 0) return
+        
+        // Sort by vertical position (top to bottom)
+        const sortedShapes = visibleElements.sort((a, b) => {
+          const rectA = a.getBoundingClientRect()
+          const rectB = b.getBoundingClientRect()
+          return rectA.top - rectB.top
+        })
+
+        // Create filters for images (EnhancedSVG approach)
+        const defs = clonedSvg.querySelector('defs') || document.createElementNS('http://www.w3.org/2000/svg', 'defs')
+        if (!clonedSvg.querySelector('defs')) {
+          clonedSvg.insertBefore(defs, clonedSvg.firstChild)
+        }
+        
+        const startFilterId = 'wave-start-' + Math.random().toString(36).substr(2, 9)
+        const startFilter = document.createElementNS('http://www.w3.org/2000/svg', 'filter')
+        startFilter.id = startFilterId
+        startFilter.innerHTML = `
+          <feFlood flood-color="${gradientStart}" result="flood"/>
+          <feComposite in="flood" in2="SourceAlpha" operator="in" result="colored"/>
+          <feBlend in="colored" in2="SourceGraphic" mode="multiply"/>
+        `
+        defs.appendChild(startFilter)
+        
+        const endFilterId = 'wave-end-' + Math.random().toString(36).substr(2, 9)
+        const endFilter = document.createElementNS('http://www.w3.org/2000/svg', 'filter')
+        endFilter.id = endFilterId
+        endFilter.innerHTML = `
+          <feFlood flood-color="${gradientEnd}" result="flood"/>
+          <feComposite in="flood" in2="SourceAlpha" operator="in" result="colored"/>
+          <feBlend in="colored" in2="SourceGraphic" mode="multiply"/>
+        `
+        defs.appendChild(endFilter)
+
+        // Wave starts AFTER path animation (1.2s)
+        const waveStart = 1.2
+        const waveDuration = 0.4
+        const stagger = waveDuration / Math.max(sortedShapes.length, 1)
+
+        // Store original styles for restoration if needed
+        const originalStyles = new Map<SVGElement, {
+          fill: string | null,
+          stroke: string | null,
+          filter: string | null
+        }>()
+
+        // Single wave from top to bottom
+        sortedShapes.forEach((shape, index) => {
+          const tagName = shape.tagName.toLowerCase()
+          const computedStyle = window.getComputedStyle(shape)
+          
+          // Store original styles
+          originalStyles.set(shape, {
+            fill: shape.getAttribute('fill'),
+            stroke: shape.getAttribute('stroke'),
+            filter: shape.getAttribute('filter')
+          })
+          
+          // Check what properties should be animated
+          const fill = computedStyle.fill
+          const stroke = computedStyle.stroke
+          
+          const shouldAnimateFill = fill && 
+            fill !== 'none' && 
+            fill !== 'transparent' &&
+            !fill.startsWith('rgba(0,0,0,0')
+          
+          const shouldAnimateStroke = stroke && 
+            stroke !== 'none' && 
+            stroke !== 'transparent' &&
+            !stroke.startsWith('rgba(0,0,0,0')
+          
+          const elementStart = waveStart + (index * stagger)
+          
+          if (tagName === 'image') {
+            // For images: apply filter animation
+            tl.to(shape, {
+              duration: 0.1,
+              attr: { filter: `url(#${startFilterId})` },
+              ease: "power2.out"
+            }, elementStart)
+            
+            tl.to(shape, {
+              duration: 0.1,
+              attr: { filter: `url(#${endFilterId})` },
+              ease: "power2.inOut"
+            }, elementStart + 0.05)
+            
+          } else if (shouldAnimateFill || shouldAnimateStroke) {
+            // For regular shapes: only animate visible properties
+            // First color (gradientStart)
+            const startUpdates: any = {
+              duration: 0.1,
+              ease: "power2.out"
+            }
+            
+            if (shouldAnimateFill) startUpdates.fill = gradientStart
+            if (shouldAnimateStroke) startUpdates.stroke = gradientStart
+            
+            tl.to(shape, startUpdates, elementStart)
+            
+            // Second color (gradientEnd)
+            const endUpdates: any = {
+              duration: 0.1,
+              ease: "power2.inOut"
+            }
+            
+            if (shouldAnimateFill) endUpdates.fill = gradientEnd
+            if (shouldAnimateStroke) endUpdates.stroke = gradientEnd
+            
+            tl.to(shape, endUpdates, elementStart + 0.05)
+          }
+        })
       }
-  
+    
       // 4. ZOOM IN to cover screen
       tl.to(clonedSvg, { 
         duration: 1.2, 
