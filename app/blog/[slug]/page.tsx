@@ -25,8 +25,22 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
   if (!blogData.blogPostCollection) return notFound()
   const blog = await getBlog(slug)
   if (!blog) return notFound()
+  const all = await getAllBlogs()
 
   const formattedBlog = formatBlog(blog)
 
-  return <BlogPostContent blogPost={formattedBlog} />
+  // Determine pagination neighbors (all is sorted by publishDate desc)
+  const index = all.findIndex(b => b?.slug === slug)
+  const nextBlog = index > 0 ? all[index - 1] : null // newer
+  const prevBlog = index >= 0 && index < all.length - 1 ? all[index + 1] : null // older
+  const newest = all.length > 0 ? all[0] : null
+
+  return (
+    <BlogPostContent
+      blogPost={formattedBlog}
+      prevBlog={prevBlog ? formatBlog(prevBlog) : undefined}
+      nextBlog={nextBlog ? formatBlog(nextBlog) : undefined}
+      newest={newest ? formatBlog(newest) : undefined}
+    />
+  )
 }
