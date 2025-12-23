@@ -1,3 +1,4 @@
+// lib/contentful/utils.ts
 import { documentToHtmlString } from '@contentful/rich-text-html-renderer'
 import { Document } from '@contentful/rich-text-types'
 
@@ -6,10 +7,14 @@ import { client } from '@/lib/contentful/client'
 import { useContentfulData } from '@/lib/contentful/provider'
 import { BlogPost } from '@/vibes/soul/primitives/blog-post-card'
 
+// Import the type from fetchers.ts
 import { QueriedBlogPost } from './fetchers'
 
-export type { QueriedBlogPost }
+// REMOVE the LocalQueriedBlogPost definition and export
+// type LocalQueriedBlogPost = { ... } // DELETE THIS
+// export type { LocalQueriedBlogPost as QueriedBlogPost } // DELETE THIS
 
+// Keep the rest of your code the same
 type FieldPath = { label: string; path: string; type?: string | null }
 
 export type ResolvedField = { data: unknown } | { error: string }
@@ -88,29 +93,67 @@ export function useEntryField({ fieldPath }: { fieldPath?: string }): ResolvedFi
   return { data: field }
 }
 
-export const formatBlogs = (blogs: QueriedBlogPost[], includeBody: boolean = true): BlogPost[] => {
+/* export const formatBlogs = (blogs: QueriedBlogPost[], includeBody: boolean = true): BlogPost[] => {
   return blogs.map(blog => formatBlog(blog, includeBody))
-}
+} */
 
-export const formatBlog = (blog: QueriedBlogPost, includeBody: boolean = true): BlogPost => {
-  if (!blog.title || !blog.publishDate || !blog.body || !blog.banner?.url || !blog.body?.json) {
-    throw new Error('Blog post is missing required fields: title, publishDate, or body')
-  }
+// Update formatBlog to use QueriedBlogPost from fetchers
+export const formatBlog = (blog: QueriedBlogPost, includeBody: boolean = true): BlogPost | null => {
+  try {
+    // Check for absolute minimum required fields
+    if (!blog.title || !blog.publishDate) {
+      console.warn('Blog missing title or publishDate:', {
+        id: blog._id,
+        title: blog.title,
+        publishDate: blog.publishDate,
+        slug: blog.slug,
+      })
+      return null
+    }
 
-  if (!isRichText(blog.body)) {
-    throw new Error('### Blog post body is not a rich text document')
-  }
+    const title = blog.title
+    const publishDate = blog.publishDate
+    
+    // ALWAYS initialize content with a default string
+    let content = 'No content available'
+    
+    if (includeBody && blog.body?.json) {
+      if (!isRichText(blog.body)) {
+        console.warn('Blog body is not rich text:', blog.body)
+        content = blog.description || 'No content available'
+      } else {
+        try {
+          const htmlContent = documentToHtmlString(blog.body.json)
+          content = htmlContent || 'No content available'
+        } catch (error) {
+          console.error('Error converting rich text to HTML:', error)
+          content = blog.description || 'No content available'
+        }
+      }
+    } else if (blog.description) {
+      content = blog.description
+    }
 
-  return {
-    title: blog.title,
-    date: new Date(blog.publishDate).toLocaleDateString('en-US', {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
-    }),
-    content: includeBody ? documentToHtmlString(blog.body.json) : blog.description,
-    image: blog.banner ? { src: blog.banner.url, alt: blog.title } : null,
-    author: blog.author,
-    href: `/blog/${blog.slug}`,
+    // Build the image object if banner exists
+    const image = blog.banner?.url ? { 
+      src: blog.banner.url, 
+      alt: blog.banner.description || title 
+    } : null
+
+    return {
+      title,
+      date: new Date(publishDate).toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      }),
+      content, // Now guaranteed to be a string
+      image,
+      author: blog.author || undefined,
+      href: `/blog/${blog.slug || blog._id}`,
+    }
+  } catch (error) {
+    console.error('Error formatting blog:', error, blog)
+    return null
   }
 }

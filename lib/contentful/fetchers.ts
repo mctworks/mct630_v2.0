@@ -7,26 +7,28 @@ const PAGINATION_LIMIT = 100 // Contentful's max items per page
 export type QueriedBlogPost = {
   __typename: 'BlogPost'
   _id: string
-  slug: string
-  title: string
-  description: string
-  publishDate: string
-  author: string
-  body: {
+  slug?: string | null
+  title?: string | null
+  description?: string | null
+  publishDate?: string | null
+  author?: string | null
+  relatedProjects?: any | null // Add this
+  relatedBlogPosts?: any | null // Add this
+  body?: {
     __typename?: 'BlogPostBody'
-    json: {
+    json?: {
       [key: string]: any
-    }
-  }
+    } | null
+  } | null
   banner?: {
     __typename: 'Asset'
-    title: string
-    description: string
-    contentType: string
-    fileName: string
-    url: string
-    width: number
-    height: number
+    title?: string | null
+    description?: string | null
+    contentType?: string | null
+    fileName?: string | null
+    url?: string | null
+    width?: number | null
+    height?: number | null
   } | null
 }
 

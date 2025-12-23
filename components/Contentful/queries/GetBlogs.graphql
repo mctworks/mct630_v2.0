@@ -27,6 +27,8 @@ query GetBlogs(
       }
       publishDate
       author
+      relatedProjects
+      relatedBlogPosts
     }
   }
 }

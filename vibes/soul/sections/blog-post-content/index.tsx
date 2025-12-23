@@ -8,6 +8,7 @@ import { clsx } from 'clsx'
 import { Stream, Streamable } from '@/vibes/soul/lib/streamable'
 import Link from 'next/link'
 import EnhancedSVG from '@/components/EnhancedSVG/EnhancedSVG'
+import { TransitionLink } from '@/components/TransitionLink/TransitionLink'
 import { ButtonLink } from '@/vibes/soul/primitives/button-link'
 import * as Skeleton from '@/vibes/soul/primitives/skeleton'
 import {
@@ -93,12 +94,12 @@ export function BlogPostContent({
 
   const [returnIconCfg, setReturnIconCfg] = useState<IconCfg>({
     iconEnableGradientDraw: true,
-    iconGradientStartColor: '#00ffff',
-    iconGradientEndColor: '#ffd700',
-    iconGradientDuration: 10,
+    iconGradientStartColor: '#6EB1FF',
+    iconGradientEndColor: '#C94F8A',
+    iconGradientDuration: 1.5,
     iconResetDuration: 0.1,
-    iconLogoStrokeWidth: 4,
-    iconAnimatePaths: 'frame, blog1, blog2, blog3',
+    iconLogoStrokeWidth: 6,
+    iconAnimatePaths: 'frame, blog1, blog2, blog3, frame',
   })
 
   useEffect(() => {
@@ -211,16 +212,22 @@ export function BlogPostContent({
                 <div className="mx-auto w-full max-w-4xl mt-8 space-y-6">
                   <div className="grid grid-cols-2 gap-3 items-center">
                     {/* Previous */}
-                    <div className="flex flex-col items-center gap-3 self-baseline">
+                    <div className="flex flex-col items-center gap-3 self-baseline w-full">
                       {prevBlog ? (
-                        <Link
-                          href={prevBlog.href ?? '#'}
-                          className="flex flex-col items-center gap-3 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)] rounded"
-                          aria-label={`Previous blog: ${prevBlog.title}`}
+                        <TransitionLink
+                          href={{ href: prevBlog.href ?? '#' }}
+                          animationType="LogoSplash"
+                          splashImage= '/icons/MCT630_blog_icon.v.1.0.svg'
+                          gradientStart={paginationIconCfg.iconGradientStartColor}
+                          gradientEnd={paginationIconCfg.iconGradientEndColor}
+                          splashScale={3}
+                          animatedPathId="all"
+                          strokeWidth={paginationIconCfg.iconLogoStrokeWidth}
+                          transitionDuration={1.2}
+                          containerClassName="w-full flex flex-col items-center gap-3 cursor-pointer transition-transform duration-300 hover:scale-105"
                         >
                           <EnhancedSVG
                             svg={{ url: '/icons/mct630-blog-previous.svg' }}
-                            // Pagination icon config (applies to Previous/Next icons)
                             enableGradientDraw={paginationIconCfg.iconEnableGradientDraw}
                             gradientStartColor={paginationIconCfg.iconGradientStartColor}
                             gradientEndColor={paginationIconCfg.iconGradientEndColor}
@@ -228,30 +235,36 @@ export function BlogPostContent({
                             resetDuration={paginationIconCfg.iconResetDuration}
                             logoStrokeWidth={paginationIconCfg.iconLogoStrokeWidth}
                             animatePaths={paginationIconCfg.iconAnimatePaths}
-                            className="w-32 h-32"
+                            className="w-32 h-32 transition-transform duration-300 hover:scale-110"
                           />
-                          <div>
+                          <div className="text-center">
                             <div className="text-sm text-(--foreground,inherit)">Previous Blog Entry</div>
-                            <div className="font-semibold">{prevBlog.title}</div>
+                            <div className="font-semibold text-(--foreground,inherit)">{prevBlog.title}</div>
                           </div>
                           <span className="sr-only">Previous blog: {prevBlog.title}</span>
-                        </Link>
+                        </TransitionLink>
                       ) : (
                         <div className="text-sm text-(--foreground,inherit) opacity-50" aria-hidden>Previous Blog Entry</div>
                       )}
                     </div>
 
                     {/* Next */}
-                    <div className="flex flex-col items-center gap-3 justify-end md:justify-end self-baseline">
+                    <div className="flex flex-col items-center gap-3 justify-end md:justify-end self-baseline w-full">
                       {nextBlog ? (
-                        <Link
-                          href={nextBlog.href ?? '#'}
-                          className="flex flex-col items-center gap-3 justify-end md:justify-end focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)] rounded"
-                          aria-label={`Next blog: ${nextBlog.title}`}
+                        <TransitionLink
+                          href={{ href: nextBlog.href ?? '#' }}
+                          animationType="LogoSplash"
+                          splashImage= '/icons/MCT630_blog_icon.v.1.0.svg'                           
+                          gradientStart={paginationIconCfg.iconGradientStartColor}
+                          gradientEnd={paginationIconCfg.iconGradientEndColor}
+                          splashScale={3}
+                          animatedPathId="all"
+                          strokeWidth={paginationIconCfg.iconLogoStrokeWidth}
+                          transitionDuration={1.2}
+                          containerClassName="w-full flex flex-col items-center gap-3 cursor-pointer transition-transform duration-300 hover:scale-105"
                         >
                           <EnhancedSVG
                             svg={{ url: '/icons/mct630-blog-next.svg' }}
-                            // Pagination icon config (applies to Previous/Next icons)
                             enableGradientDraw={paginationIconCfg.iconEnableGradientDraw}
                             gradientStartColor={paginationIconCfg.iconGradientStartColor}
                             gradientEndColor={paginationIconCfg.iconGradientEndColor}
@@ -259,14 +272,14 @@ export function BlogPostContent({
                             resetDuration={paginationIconCfg.iconResetDuration}
                             logoStrokeWidth={paginationIconCfg.iconLogoStrokeWidth}
                             animatePaths={paginationIconCfg.iconAnimatePaths}
-                            className="w-32 h-32"
+                            className="w-32 h-32 transition-transform duration-300 hover:scale-110"
                           />
-                          <div className="text-right">
+                          <div className="text-center">
                             <div className="text-sm text-(--foreground,inherit)">Next Blog Entry</div>
-                            <div className="font-semibold">{nextBlog.title}</div>
+                            <div className="font-semibold text-(--foreground,inherit)">{nextBlog.title}</div>
                           </div>
                           <span className="sr-only">Next blog: {nextBlog.title}</span>
-                        </Link>
+                        </TransitionLink>
                       ) : (
                         <div className="text-sm text-(--foreground,inherit) opacity-50" aria-hidden>Next Blog Entry</div>
                       )}
@@ -275,29 +288,60 @@ export function BlogPostContent({
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
                     {/* Newest blog card */}
-                    <div className="border rounded-lg p-4 flex flex-col gap-4 items-center">
+                    <div className="relative">
                       {newest ? (
-                        <>
-                          {newest.image ? (
-                            <Image src={newest.image.src} alt={newest.image.alt} width={225} height={180} className="rounded-md object-cover" />
-                          ) : (
-                            <div className="w-28 h-20 rounded-md bg-(--contrast-100,var(--contrast-100))" />
-                          )}
-                          <div>
-                            <div className="text-xs text-(--foreground,inherit)">Newest</div>
-                            <Link href={newest.href ?? '#'} className="font-semibold">
-                              {newest.title}
-                            </Link>
-                          </div>
-                        </>
+                        <TransitionLink
+                          href={{ href: newest.href ?? '#' }}
+                          animationType="ActraiserDrop"
+                          rotationSpeed={90}
+                          zoomScale={5}
+                          transitionDuration={1}
+                          containerClassName="w-full h-full"
+                        >
+                          <article className="group @container relative w-full h-full border rounded-lg overflow-hidden transition-transform duration-500 hover:scale-[1.02]">
+                            <div className="relative aspect-[4/3] w-full overflow-hidden bg-(--blog-post-card-image-background,var(--contrast-100))">
+                              {newest.image ? (
+                                <Image 
+                                  src={newest.image.src} 
+                                  alt={newest.image.alt} 
+                                  fill
+                                  className="object-cover transition-transform duration-500 ease-out group-hover:scale-110" 
+                                />
+                              ) : (
+                                <div className="p-4 text-2xl leading-none font-bold tracking-tighter text-(--blog-post-card-empty-text,color-mix(in_oklab,var(--foreground)_15%,transparent))">
+                                  {newest.title}
+                                </div>
+                              )}
+                            </div>
+                            <div className="p-4">
+                              <div className="text-xs text-(--foreground,inherit) uppercase tracking-wide mb-2">Newest</div>
+                              <h5 className="text-base leading-snug font-medium text-(--blog-post-card-title-text,var(--foreground))">
+                                {newest.title}
+                              </h5>
+                            </div>
+                          </article>
+                        </TransitionLink>
                       ) : (
-                        <div className="opacity-50">No newest blog post available</div>
+                        <div className="border rounded-lg p-4 flex items-center justify-center min-h-[200px]">
+                          <div className="opacity-50 text-center">No newest blog post available</div>
+                        </div>
                       )}
                     </div>
 
                     {/* Return to blog main */}
-                    <div className="flex items-center gap-4 rounded-lg p-4 border">
-                      <Link href="/blog" aria-label="Return to blog main page" className="flex items-center gap-4 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)] rounded">
+                    <TransitionLink
+                      href={{ href: '/blog' }}
+                      animationType="LogoSplash"
+                      splashImage= '/icons/MCT630_blog_icon.v.1.0.svg'
+                      gradientStart="#a6ff00ff"
+                      gradientEnd="#aff3f3ff"
+                      splashScale={3}
+                      animatedPathId="all"
+                      strokeWidth={3}
+                      transitionDuration={1.2}
+                      containerClassName="w-full h-full"
+                    >
+                      <div className="group flex items-center gap-4 rounded-lg p-4 border h-full transition-all duration-300 hover:border-(--color-primary,var(--primary)) hover:shadow-lg cursor-pointer">
                         <EnhancedSVG
                           svg={{ url: '/icons/MCT630_blog_icon.v.1.0.svg' }}
                           enableGradientDraw={returnIconCfg.iconEnableGradientDraw}
@@ -307,15 +351,15 @@ export function BlogPostContent({
                           resetDuration={returnIconCfg.iconResetDuration}
                           logoStrokeWidth={returnIconCfg.iconLogoStrokeWidth}
                           animatePaths={returnIconCfg.iconAnimatePaths}
-                          className="w-24 h-24"
+                          className="w-24 h-24 flex-shrink-0 transition-transform duration-300 group-hover:scale-110"
                         />
                         <div>
-                          <div className="text-sm">Return to</div>
-                          <div className="font-semibold">Blog index</div>
+                          <div className="text-sm text-(--foreground,inherit) opacity-70">Return to</div>
+                          <div className="font-semibold text-(--foreground,inherit)">Blog index</div>
                         </div>
                         <span className="sr-only">Return to blog index page</span>
-                      </Link>
-                    </div>
+                      </div>
+                    </TransitionLink>
                   </div>
                 </div>
               </>

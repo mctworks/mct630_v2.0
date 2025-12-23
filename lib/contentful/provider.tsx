@@ -7,7 +7,7 @@ import { GetBlogsQuery } from '@/generated/contentful'
 type CollectionType = GetBlogsQuery['blogPostCollection']
 
 const ContentfulContext = createContext<
-  { data: CollectionType | NonNullable<CollectionType>['items'] } | undefined
+  { data: NonNullable<CollectionType>['items'] } | undefined
 >(undefined)
 
 export function ContentfulProvider({
@@ -17,7 +17,9 @@ export function ContentfulProvider({
   children: ReactNode
   value: CollectionType | NonNullable<CollectionType>['items']
 }) {
-  return <ContentfulContext.Provider value={{ data: value }}>{children}</ContentfulContext.Provider>
+  // Normalize value so consumers always receive an array of items
+  const items = Array.isArray(value) ? value : (value?.items ?? [])
+  return <ContentfulContext.Provider value={{ data: items }}>{children}</ContentfulContext.Provider>
 }
 
 export function useContentfulData() {
@@ -27,12 +29,9 @@ export function useContentfulData() {
     return { error: 'useContentfulData must be used within a ContentfulProvider' }
   }
 
-  if (!context.data) {
+  if (!context.data || !Array.isArray(context.data)) {
     return { error: 'No data found' }
   }
 
-  if (Array.isArray(context.data)) {
-    return { data: context.data }
-  }
-  return { data: context.data.items[0] }
+  return { data: context.data }
 }
