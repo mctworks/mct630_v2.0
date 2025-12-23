@@ -621,3 +621,8 @@ html, body {
   top: 0;
   left: 0;
 }
+
+/* Blog tweaks */
+.card-background {
+  background: var(--color-menubg);
+}
