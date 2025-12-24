@@ -1,17 +1,37 @@
-import { ComponentPropsWithoutRef } from 'react'
+'use client'
 
-import { useEntryField } from '@/lib/contentful/utils'
-
+import { useContentfulData } from '@/lib/contentful/provider'
 import { ContentfulText } from '../../../common/ContentfulText'
 
-type BaseProps = {
-  fieldPath?: string
+// Helper to extract text field from blog
+function getFieldFromBlog(blog: any, fieldName: string) {
+  if (!blog) return { error: 'No blog data' }
+  
+  const value = blog[fieldName]
+  if (value === null || value === undefined) {
+    return { error: `Field "${fieldName}" not found` }
+  }
+  
+  return { data: value }
 }
 
-type Props = BaseProps & Omit<ComponentPropsWithoutRef<typeof ContentfulText>, 'field'>
-
-export function BlogPostText({ fieldPath, ...rest }: Props) {
-  const field = useEntryField({ fieldPath })
-
-  return <ContentfulText {...rest} field={field} />
+export function BlogPostText() {
+  const { data: blogs } = useContentfulData()
+  
+  if (!blogs || !Array.isArray(blogs) || blogs.length === 0) {
+    return null
+  }
+  
+  const blog = blogs[0]
+  
+  // Determine which field to show based on context
+  // You might want to make this configurable or create separate components
+  const field = 
+    getFieldFromBlog(blog, 'title') || 
+    getFieldFromBlog(blog, 'description') || 
+    getFieldFromBlog(blog, 'publishDate') || 
+    getFieldFromBlog(blog, 'author') || 
+    { error: 'No text field found' }
+  
+  return <ContentfulText field={field} />
 }

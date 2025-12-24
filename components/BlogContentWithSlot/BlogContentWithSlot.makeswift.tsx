@@ -2,7 +2,7 @@ import { Slot } from '@makeswift/runtime/controls'
 
 import { runtime } from '@/lib/makeswift/runtime'
 
-import BlogContentWithSlot from '.'
+import BlogContentWithSlot from './BlogContentWithSlot'
 
 export const BLOG_CONTENT_WITH_SLOT_TYPE = 'blogContentWithSlot'
 

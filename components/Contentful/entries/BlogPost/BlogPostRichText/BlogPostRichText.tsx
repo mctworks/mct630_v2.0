@@ -1,17 +1,17 @@
-import { ComponentPropsWithoutRef } from 'react'
+'use client'
 
-import { useEntryField } from '@/lib/contentful/utils'
-
+import { useContentfulData } from '@/lib/contentful/provider'
 import { ContentfulRichText } from '../../../common/ContentfulRichText/ContentfulRichText'
 
-type BaseProps = {
-  fieldPath?: string
-}
-
-type Props = BaseProps & Omit<ComponentPropsWithoutRef<typeof ContentfulRichText>, 'field'>
-
-export function BlogPostRichText({ fieldPath, ...rest }: Props) {
-  const field = useEntryField({ fieldPath })
-
-  return <ContentfulRichText {...rest} field={field} />
+export function BlogPostRichText() {
+  const { data: blogs } = useContentfulData()
+  
+  if (!blogs || !Array.isArray(blogs) || blogs.length === 0) {
+    return null
+  }
+  
+  const blog = blogs[0]
+  const field = blog?.body ? { data: blog.body } : { error: 'No body content found' }
+  
+  return <ContentfulRichText field={field} />
 }

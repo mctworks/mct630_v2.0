@@ -7,7 +7,7 @@ import { client } from '@/lib/contentful/client'
 import { GetBlogsDocument, GetBlogsQuery } from '@/generated/contentful'
 import { ContentfulProvider } from '@/lib/contentful/provider'
 import { client as MakeswiftClient } from '@/lib/makeswift/client'
-import { BLOG_POST_TEMPLATE_TYPE } from '@/components/BlogPostTemplate/BlogPostTemplate.makeswift'
+import { BLOG_CONTENT_WITH_SLOT_TYPE } from '@/components/BlogContentWithSlot/BlogContentWithSlot.makeswift'
 
 export async function generateStaticParams() {
   const blogs = await getAllBlogs()
@@ -20,38 +20,32 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
   if (!slug) return notFound()
 
   const componentSnapshot = await MakeswiftClient.getComponentSnapshot(
-    'blog-post-template',
+    'blogContentWithSlot',
     { siteVersion: await getSiteVersion() }
   )
 
   if (componentSnapshot == null) {
-    console.warn('Create "blog-post-template" component in Makeswift dashboard')
+    console.warn('BlogContentWithSlot component not found in Makeswift')
     return notFound()
   }
 
+  // Use client.request to get the exact GraphQL type
   const blogData: GetBlogsQuery = await client.request(GetBlogsDocument, {
     filter: { slug },
   })
 
-  // Extract the single blog post from the collection
-  const blogPost = blogData.blogPostCollection?.items?.[0]
-  
-  if (!blogPost) return notFound()
-
-  // Wrap the single blog post in the expected collection structure
-  const collectionData = {
-    __typename: 'BlogPostCollection' as const,
-    total: 1,
-    items: [blogPost],
+  if (!blogData.blogPostCollection) {
+    console.warn(`Blog post not found for slug: ${slug}`)
+    return notFound()
   }
 
-  // Pass the properly formatted collection
+  // Use the exact collection from the query (no type issues)
   return (
-    <ContentfulProvider value={collectionData}>
+    <ContentfulProvider value={blogData.blogPostCollection}>
       <MakeswiftComponent
         snapshot={componentSnapshot}
-        label="Blog Post Template"
-        type={BLOG_POST_TEMPLATE_TYPE}
+        label="Blog Content with Slot"
+        type={BLOG_CONTENT_WITH_SLOT_TYPE}
       />
     </ContentfulProvider>
   )
