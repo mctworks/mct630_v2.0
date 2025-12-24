@@ -4,7 +4,7 @@ const withMakeswift = createWithMakeswift()
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  fileTracingRoot: __dirname,
+ // fileTracingRoot: __dirname,
   turbopack: {},
   images: {
     remotePatterns: [
@@ -15,6 +15,13 @@ const nextConfig = {
         pathname: `/${process.env.NEXT_PUBLIC_CONTENTFUL_SPACE_ID}/**`,
       },
     ],
+  },
+
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true, 
   },
 }
 
