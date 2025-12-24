@@ -250,8 +250,8 @@ div:not([style*="background"]):not(.outer-container):not(.bm-menu):not(.nav-stat
   }, [
     mounted,
     isDark,
-    lightBackground, lightText, lightSecondary, lightMenuBG,
-    darkBackground, darkText, darkSecondary, darkMenuBG,
+    lightBackground, lightText, lightSecondary, lightMenuBG, lightSubtext,
+    darkBackground, darkText, darkSecondary, darkMenuBG, darkSubtext,
     lightNavGlow1, lightNavGlow2, lightNavGlow3, lightNavGlow4,
     darkNavGlow1, darkNavGlow2, darkNavGlow3, darkNavGlow4,
     navList

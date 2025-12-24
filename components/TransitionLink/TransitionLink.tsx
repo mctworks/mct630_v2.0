@@ -154,6 +154,7 @@ export function TransitionLink({
     }
   }, [href, router])
 
+  //eslint-disable-next-line react-hooks/exhaustive-deps
   const performLogoSplashAnimation = useCallback((gsap: any, container: HTMLDivElement) => {
     try {
       const svg = container.querySelector<SVGElement>('#logo') || container.querySelector<SVGElement>('svg')
