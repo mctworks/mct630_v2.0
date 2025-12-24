@@ -6,21 +6,24 @@ import { BlogPostContent } from '@/vibes/soul/sections/blog-post-content'
 
 export async function generateStaticParams() {
   const blogs = await getAllBlogs()
-  return blogs.map(blog => ({ slug: blog?.slug }))
+  return blogs.map(blog => ({ slug: blog?.slug })).filter(Boolean)
 }
 
 export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
 
-  if (!slug) {
-    return notFound()
-  }
+  if (!slug) return notFound()
 
   const blog = await getBlog(slug)
-
   if (!blog) return notFound()
 
   const formattedBlog = formatBlog(blog)
+  
+  // NULL CHECK
+  if (!formattedBlog) {
+    console.error('Failed to format blog post:', blog.slug)
+    return notFound() // Or show an error page
+  }
 
   const breadcrumbs = [
     {
@@ -35,9 +38,10 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
     },
     {
       id: '3',
-      label: formattedBlog.title,
+      label: formattedBlog.title, 
       href: '#',
     },
   ]
+  
   return <BlogPostContent breadcrumbs={breadcrumbs} blogPost={formattedBlog} />
 }
