@@ -64,3 +64,6 @@ OLLAMA_QUICK_REFERENCE.md
 ollama-diagnostics.sh
 TASK_COMPLETION_SUMMARY.md
 VERIFICATION_CHECKLIST.md
+.next-dev.log
+.next-dev.pid
+

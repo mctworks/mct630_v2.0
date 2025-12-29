@@ -63,7 +63,6 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body className={`${body.variable} ${heading.variable} ${mono.variable} ${ztGatha.variable}`}>
-        {/* Remove inline styles - let CSS handle this */}
         <div id="outer-container">
           <MakeswiftProvider siteVersion={await getSiteVersion()}>
             <ThemeConfig>
