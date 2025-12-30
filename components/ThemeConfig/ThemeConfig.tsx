@@ -12,6 +12,7 @@ interface ThemeContextType {
     navglow2?: string
     navglow3?: string
     navglow4?: string
+    navbar: string
     text: string
     primary: string
     secondary: string
@@ -38,6 +39,7 @@ interface ThemeConfigProps {
   lightNavGlow2?: string
   lightNavGlow3?: string
   lightNavGlow4?: string
+  lightNavBar?: string
   lightText?: string
   lightSubtext?: string
   lightPrimary?: string
@@ -49,6 +51,7 @@ interface ThemeConfigProps {
   darkNavGlow2?: string
   darkNavGlow3?: string
   darkNavGlow4?: string
+  darkNavBar?: string
   darkText?: string
   darkSubtext?: string
   darkPrimary?: string
@@ -64,6 +67,7 @@ export function ThemeConfig({
   lightNavGlow2 = '#b3b3b1ff',
   lightNavGlow3 = 'rgba(0, 0, 0, 0.6)',
   lightNavGlow4 = 'rgba(0, 0, 0, 0.4)',
+  lightNavBar = 'rgba(232, 240, 243, 0.83)',
   lightText = '#000000',
   lightSubtext = '#4d464cff',
   lightSecondary = '#4a4a4a',
@@ -72,6 +76,7 @@ export function ThemeConfig({
   darkNavGlow2 = '#808080ff',
   darkNavGlow3 = 'rgba(255, 255, 255, 0.6)',
   darkNavGlow4 = 'rgba(255, 255, 255, 0.4)',
+  darkNavBar = 'rgba(29, 28, 36, 0.83)',
   darkBackground = '#1d1c24ff',
   darkText = '#ffffff',
   darkSubtext = '#b9a9c0ff',
@@ -121,6 +126,7 @@ export function ThemeConfig({
           navglow2: darkNavGlow2,
           navglow3: darkNavGlow3,
           navglow4: darkNavGlow4,
+          navbar: darkNavBar,
           navlist: navList,
         }
       : {
@@ -134,6 +140,7 @@ export function ThemeConfig({
           navglow2: lightNavGlow2,
           navglow3: lightNavGlow3,
           navglow4: lightNavGlow4,
+          navbar: lightNavBar,
           navlist: navList,
         }
 
@@ -188,11 +195,11 @@ export function ThemeConfig({
   [data-makeswift-component-type="box"],
   [data-makeswift-component-type="slot"],
   div[class*="makeswift"] {
-    background-color: ${colors.background} !important;
+    background-color: ${colors.background};
   }
 
-  div[class^="mswft-"]:not([style*="background-color"]) {
-  background-color: ${colors.background} !important;
+  div[class^="mswft-"]:not([style*="background-color"]):not(.nav-container > div):not(.nav-header-bar > div):not(.#header-icons > div) {
+  background-color: ${colors.background};
 }
 
 /* This rule ensures the pattern shapes (e.g., dots/lines inside the pattern definition) 
@@ -204,7 +211,8 @@ export function ThemeConfig({
 
 
   /* Nuclear option */
-div:not([style*="background"]):not(.outer-container):not(.bm-menu):not(.nav-status-box):not(.#nav-status > div) {
+div:not([style*="background"]):not(.outer-container):not(.bm-menu):not(.nav-status-box):not(.#nav-status > div):not(.nav-header-bar > div)
+{
   background-color: ${colors.background} !important;
 }
 
@@ -252,8 +260,8 @@ div:not([style*="background"]):not(.outer-container):not(.bm-menu):not(.nav-stat
     isDark,
     lightBackground, lightText, lightSecondary, lightMenuBG, lightSubtext,
     darkBackground, darkText, darkSecondary, darkMenuBG, darkSubtext,
-    lightNavGlow1, lightNavGlow2, lightNavGlow3, lightNavGlow4,
-    darkNavGlow1, darkNavGlow2, darkNavGlow3, darkNavGlow4,
+    lightNavGlow1, lightNavGlow2, lightNavGlow3, lightNavGlow4, lightNavBar,
+    darkNavGlow1, darkNavGlow2, darkNavGlow3, darkNavGlow4, darkNavBar,
     navList
   ])
 
@@ -267,6 +275,7 @@ div:not([style*="background"]):not(.outer-container):not(.bm-menu):not(.nav-stat
         navglow2: darkNavGlow2,
         navglow3: darkNavGlow3,
         navglow4: darkNavGlow4,
+        navbar: darkNavBar,
         text: darkText,
         primary: lightBackground,
         secondary: darkSecondary,
@@ -279,6 +288,7 @@ div:not([style*="background"]):not(.outer-container):not(.bm-menu):not(.nav-stat
         navglow2: lightNavGlow2,
         navglow3: lightNavGlow3,
         navglow4: lightNavGlow4,
+        navbar: lightNavBar,
         text: lightText,
         primary: darkBackground,
         secondary: lightSecondary,

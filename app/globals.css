@@ -489,7 +489,12 @@ body *,
   display: flex;
   justify-content: flex-start;
   pointer-events: auto;
+  background-color: var(--color-navbar);
 }
+
+/* .nav-header-bar {
+  background: unset !important;
+}  */
 
 .nav-container .bm-burger-button,
 .nav-container .bm-menu-wrap,
