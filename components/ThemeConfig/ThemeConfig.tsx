@@ -207,8 +207,8 @@ div[class*="makeswift"] {
   background-color: transparent !important;
 }
 
-/* Apply background to other divs EXCLUDING nav elements */
-div:not(.nav-container):not(.nav-container *):not(.nav-header-bar):not(.nav-status-box):not(.bm-menu):not(.outer-container) {
+/* Apply background to other divs EXCLUDING nav elements and animation overlays*/
+div:not(.nav-container):not(.nav-container *):not(.nav-header-bar):not(.nav-status-box):not(.bm-menu):not(.outer-container):not(.animation-overlay) {
   background-color: ${colors.background} !important;
 }
 
@@ -223,7 +223,7 @@ div:not(.nav-container):not(.nav-container *):not(.nav-header-bar):not(.nav-stat
 }
 
 .nav-status-box {
-  background-color: ${colors.menubg} !important;
+  background-color: ${colors.navbar} !important;
 }
 
 .nav-status-text {

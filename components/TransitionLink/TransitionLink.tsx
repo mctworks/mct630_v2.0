@@ -178,6 +178,8 @@ export function TransitionLink({
       overlay.style.background = 'rgba(0, 0, 0, 0.7)'
       overlay.style.backdropFilter = 'blur(8px)'
       
+      overlay.classList.add('animation-overlay')
+      
       // Clone SVG and make it larger for the overlay
       const clonedSvg = svg.cloneNode(true) as SVGElement
       clonedSvg.style.width = 'min(60vw, 300px)'
