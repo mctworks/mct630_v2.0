@@ -160,62 +160,59 @@ export function ThemeConfig({
     // Apply global styles with high specificity - target all elements
     styleEl.textContent = `
   @layer overrides {
-  /* Force all elements to inherit color */
-  * {
-    color: inherit !important;
-  }
-  
-  /* Set the base text color */
-  body, html {
-    color: ${colors.text} !important;
-    background-color: ${colors.background} !important;
-  }
-  
-  /* Target headings specifically */
-  h1, h2, h3, h4, h5, h6,
-  [data-makeswift-component-type="text"] h1,
-  [data-makeswift-component-type="text"] h2,
-  [data-makeswift-component-type="text"] h3, {
-    color: ${colors.text} !important;
-  }
-
-  [data-makeswift-component-type="text"] h4,
-  [data-makeswift-component-type="text"] h5,
-  [data-makeswift-component-type="text"] h6 {
-    color: ${colors.subtext} !important;
-  }
-  
-  /* Target all Makeswift components */
-  [data-makeswift-component-type] {
-    color: ${colors.text} !important;
-  }
-
-  /* Target Makeswift's main containers */
-  main, [data-makeswift-component-type],
-  [data-makeswift-component-type="box"],
-  [data-makeswift-component-type="slot"],
-  div[class*="makeswift"] {
-    background-color: ${colors.background};
-  }
-
-  div[class^="mswft-"]:not([style*="background-color"]):not(.nav-container > div):not(.nav-header-bar > div):not(.#header-icons > div) {
-  background-color: ${colors.background};
+/* Apply theme to all elements */
+* {
+  color: inherit !important;
 }
 
-/* This rule ensures the pattern shapes (e.g., dots/lines inside the pattern definition) 
-   are colored using the theme color defined by the JS. */
-.enhanced-svg-container .svg-pattern-shape {
-    fill: var(--svg-line-color, #000); /* Use the CSS variable */
-    stroke: var(--svg-line-color, #000);
-}
-
-
-  /* Nuclear option */
-div:not([style*="background"]):not(.outer-container):not(.bm-menu):not(.nav-status-box):not(.#nav-status > div):not(.nav-header-bar > div)
-{
+/* Set base colors */
+body, html {
+  color: ${colors.text} !important;
   background-color: ${colors.background} !important;
 }
 
+/* Target headings */
+h1, h2, h3, h4, h5, h6,
+[data-makeswift-component-type="text"] h1,
+[data-makeswift-component-type="text"] h2,
+[data-makeswift-component-type="text"] h3 {
+  color: ${colors.text} !important;
+}
+
+[data-makeswift-component-type="text"] h4,
+[data-makeswift-component-type="text"] h5,
+[data-makeswift-component-type="text"] h6 {
+  color: ${colors.subtext} !important;
+}
+
+/* Target all Makeswift components */
+[data-makeswift-component-type] {
+  color: ${colors.text} !important;
+}
+
+/* Target Makeswift's main containers */
+main, [data-makeswift-component-type],
+[data-makeswift-component-type="box"],
+[data-makeswift-component-type="slot"],
+div[class*="makeswift"] {
+  background-color: ${colors.background};
+}
+
+/* NAV BAR SPECIFIC RULES */
+.nav-container {
+  background-color: ${colors.navbar} !important;
+}
+
+.nav-header-bar {
+  background-color: transparent !important;
+}
+
+/* Apply background to other divs EXCLUDING nav elements */
+div:not(.nav-container):not(.nav-container *):not(.nav-header-bar):not(.nav-status-box):not(.bm-menu):not(.outer-container) {
+  background-color: ${colors.background} !important;
+}
+
+/* Other specific rules */
 .outer-container {
   background-color: ${colors.menubg} !important;
 }
@@ -223,13 +220,7 @@ div:not([style*="background"]):not(.outer-container):not(.bm-menu):not(.nav-stat
 .bm-menu {
   background: ${colors.navlist} !important;
   border: ${colors.text} 1px solid !important;
-  color: "#ffffff" !important;
 }
-
-.bm-menu-item {
-  color: "#ffffff" !important;
-}
-
 
 .nav-status-box {
   background-color: ${colors.menubg} !important;
@@ -240,10 +231,6 @@ div:not([style*="background"]):not(.outer-container):not(.bm-menu):not(.nav-stat
   0 -1px 1px ${colors.navglow2}, 
   -5px 4px 15px ${colors.navglow3}, 
   -3px -2px 2px ${colors.navglow4}
-}
-
-.#nav-status > div{
-    background-color: ${colors.menubg} !important;
 }
 
 }
