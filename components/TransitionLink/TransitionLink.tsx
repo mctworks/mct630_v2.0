@@ -143,7 +143,11 @@ export function TransitionLink({
       }
 
       import('gsap').then(({ gsap }) => {
-        performLogoSplashAnimation(gsap, container)
+        // performLogoSplashAnimation may be async when loading external SVGs
+        Promise.resolve(performLogoSplashAnimation(gsap, container)).catch(err => {
+          console.error('LogoSplash animation failed:', err)
+          if (href?.href) router.push(href.href)
+        })
       }).catch(error => {
         console.error('Failed to load GSAP:', error)
         if (href?.href) router.push(href.href)
@@ -155,10 +159,39 @@ export function TransitionLink({
   }, [href, router])
 
   //eslint-disable-next-line react-hooks/exhaustive-deps
-  const performLogoSplashAnimation = useCallback((gsap: any, container: HTMLDivElement) => {
+  const performLogoSplashAnimation = useCallback(async (gsap: any, container: HTMLDivElement) => {
     try {
-      const svg = container.querySelector<SVGElement>('#logo') || container.querySelector<SVGElement>('svg')
-      
+      // If a splashImage prop is provided, prefer fetching and using that SVG
+      let svg: SVGElement | null = null
+      try {
+        if (splashImage) {
+          let url: string | undefined
+          if (typeof splashImage === 'string') url = splashImage
+          else if (splashImage && typeof splashImage === 'object') url = (splashImage as any).url
+
+          if (url) {
+            const resp = await fetch(url, { cache: 'no-cache' })
+            if (resp.ok) {
+              const text = await resp.text()
+              const parser = new DOMParser()
+              const doc = parser.parseFromString(text, 'image/svg+xml')
+              const fetchedSvg = doc.querySelector('svg')
+              if (fetchedSvg) {
+                // Use the fetched SVG for splash animation (prevents EnhancedSVG animation interference)
+                svg = fetchedSvg as SVGElement
+              }
+            }
+          }
+        }
+      } catch (err) {
+        // If fetching fails, we'll fallback to in-DOM SVG
+        console.warn('Failed to fetch splashImage for LogoSplash, falling back to in-DOM SVG:', err)
+      }
+
+      if (!svg) {
+        svg = container.querySelector<SVGElement>('#logo') || container.querySelector<SVGElement>('svg')
+      }
+
       if (!svg) {
         throw new Error('SVG not found for LogoSplash animation')
       }
@@ -200,48 +233,49 @@ export function TransitionLink({
       })
 
       // Parse animated paths
-      const normalizedAnimatePaths = !animatedPathId || animatedPathId === 'all' 
-        ? [] // If "all", we don't animate any specific paths
+      const normalizedAnimatePaths = !animatedPathId
+        ? []
         : String(animatedPathId).split(',').map(p => p.trim()).filter(Boolean)
 
-      // Find ONLY the specified paths for line animation
+      // Determine which paths to animate. Support 'all' to animate every <path>
       let pathsToAnimate: SVGPathElement[] = []
       if (normalizedAnimatePaths.length > 0 && !normalizedAnimatePaths.includes('none')) {
-        const selected: SVGPathElement[] = []
-        normalizedAnimatePaths.forEach(id => {
-          const cleanId = id.replace(/^#/, '').trim()
-          if (!cleanId) return
-          
-          // Exact match
-          try {
-            const exact = clonedSvg.querySelector(`#${CSS.escape(cleanId)}`)
-            if (exact && exact instanceof SVGPathElement) {
-              selected.push(exact)
+        if (normalizedAnimatePaths.length === 1 && normalizedAnimatePaths[0] === 'all') {
+          pathsToAnimate = Array.from(clonedSvg.querySelectorAll<SVGPathElement>('path'))
+        } else {
+          const selected: SVGPathElement[] = []
+          normalizedAnimatePaths.forEach(id => {
+            const cleanId = id.replace(/^#/, '').trim()
+            if (!cleanId) return
+            // Exact match
+            try {
+              const exact = clonedSvg.querySelector(`#${CSS.escape(cleanId)}`)
+              if (exact && exact instanceof SVGPathElement) {
+                selected.push(exact)
+                return
+              }
+            } catch (err) {
+              // ignore
+            }
+            // Ends-with match
+            const ends = Array.from(clonedSvg.querySelectorAll('[id]')).filter(el => 
+              el.id.endsWith(`-${cleanId}`) || el.id.endsWith(`_${cleanId}`) || el.id === cleanId
+            ) as SVGPathElement[]
+            if (ends.length > 0) {
+              ends.forEach(el => selected.push(el))
               return
             }
-          } catch (err) {
-            // ignore
-          }
-          
-          // Ends-with match
-          const ends = Array.from(clonedSvg.querySelectorAll('[id]')).filter(el => 
-            el.id.endsWith(`-${cleanId}`) || el.id.endsWith(`_${cleanId}`) || el.id === cleanId
-          ) as SVGPathElement[]
-          if (ends.length > 0) {
-            ends.forEach(el => selected.push(el))
-            return
-          }
-          
-          // Includes match
-          const includes = Array.from(clonedSvg.querySelectorAll('[id]')).filter(el => 
-            el.id.includes(cleanId)
-          ) as SVGPathElement[]
-          if (includes.length > 0) {
-            includes.forEach(el => selected.push(el))
-            return
-          }
-        })
-        pathsToAnimate = selected
+            // Includes match
+            const includes = Array.from(clonedSvg.querySelectorAll('[id]')).filter(el => 
+              el.id.includes(cleanId)
+            ) as SVGPathElement[]
+            if (includes.length > 0) {
+              includes.forEach(el => selected.push(el))
+              return
+            }
+          })
+          pathsToAnimate = selected
+        }
       }
 
       // Create a Set for quick lookup of animated paths

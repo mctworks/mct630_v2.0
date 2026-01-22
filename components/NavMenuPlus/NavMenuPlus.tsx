@@ -227,7 +227,7 @@ export function NavMenuPlus({ className, logo, links, headerBar }: any) {
         menuClassName="bm-menu"
         morphShapeClassName="bm-morph-shape"
         itemListClassName="bm-item-list"
-        overlayClassName="bm-overlay"
+        overlayClassName="none"
         pageWrapId="page-wrap"
         outerContainerId="outer-container"
       >

@@ -200,7 +200,11 @@ div[class*="makeswift"] {
 
 /* NAV BAR SPECIFIC RULES */
 .nav-container {
-  background-color: ${colors.navbar} !important;
+ /* background-color: ${colors.navbar} !important; --- IGNORE --- */
+}
+
+.nav-status-box {
+  background-color: transparent !important;
 }
 
 .nav-header-bar {
@@ -208,7 +212,7 @@ div[class*="makeswift"] {
 }
 
 /* Apply background to other divs EXCLUDING nav elements and animation overlays*/
-div:not(.nav-container):not(.nav-container *):not(.nav-header-bar):not(.nav-status-box):not(.bm-menu):not(.outer-container):not(.animation-overlay) {
+div:not(.nav-container):not(.nav-container *):not(.nav-header-bar):not(.nav-status-box):not(.bm-menu):not(.animation-overlay):not(.card-background):not(.card-background *):not(#outer-container){
   background-color: ${colors.background} !important;
 }
 
@@ -222,9 +226,7 @@ div:not(.nav-container):not(.nav-container *):not(.nav-header-bar):not(.nav-stat
   border: ${colors.text} 1px solid !important;
 }
 
-.nav-status-box {
-  background-color: ${colors.navbar} !important;
-}
+
 
 .nav-status-text {
     text-shadow: 1px 0 1px ${colors.navglow1}, 
