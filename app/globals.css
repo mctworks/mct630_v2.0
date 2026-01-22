@@ -2,7 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
+@import "@fontsource/poppins"; 
+
+body {
+  font-family: 'Poppins', sans-serif;
+}
+
 @layer base {
+    
+  @font-face {
+    font-family: 'var(--font-family-zt-gatha)';
+    src: url('/fonts/zt-gatha/ZTGatha-SemiBold.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+  }
+
+
   :root {
     --primary: oklch(90.35% 0.22 136.76);
     --primary-highlight: color-mix(in oklab, var(--primary), white 75%);
@@ -29,6 +45,7 @@
     --contrast-300: oklch(76.68% 0 0);
     --contrast-400: oklch(63.34% 0 0);
     --contrast-500: oklch(45.68% 0 0);
+    --font-family-zt-gatha: 'ZT Gatha', serif;
     --font-variation-settings-heading: 'slnt' 0;
     --font-feature-settings-heading: normal;
     --font-variation-settings-body: 'slnt' 0;
@@ -211,38 +228,38 @@
   .prose {
     :where(h1):not(:where([class~='not-prose'], [class~='not-prose'] *)) {
       color: var(--foreground);
-      font-family: var(--font-family-zt-gatha), serif;
+      /* font-family: var(--font-family-zt-gatha), serif; */
       font-weight: 600;
     }
 
     :where(h2):not(:where([class~='not-prose'], [class~='not-prose'] *)) {
       color: var(--foreground);
-      font-family: var(--font-family-heading);
+      /* font-family: var(--font-family-heading); */
     }
 
     :where(h3):not(:where([class~='not-prose'], [class~='not-prose'] *)) {
       color: var(--foreground);
-      font-family: var(--font-family-heading);
+      /* font-family: var(--font-family-heading); */
     }
 
     :where(h4):not(:where([class~='not-prose'], [class~='not-prose'] *)) {
       color: var(--foreground);
-      font-family: var(--font-family-heading);
+      /* font-family: var(--font-family-heading); */
     }
 
     :where(h5):not(:where([class~='not-prose'], [class~='not-prose'] *)) {
       color: var(--foreground);
-      font-family: var(--font-family-heading);
+      /* font-family: var(--font-family-heading); */
     }
 
     :where(h6):not(:where([class~='not-prose'], [class~='not-prose'] *)) {
       color: var(--foreground);
-      font-family: var(--font-family-heading);
+      /* font-family: var(--font-family-heading); */
     }
 
     :where(p):not(:where([class~='not-prose'], [class~='not-prose'] *)) {
       color: var(--foreground);
-      font-family: var(--font-family-body);
+      /* font-family: var(--font-family-body); */
     }
 
     :where(a):not(:where([class~='not-prose'], [class~='not-prose'] *)) {
@@ -256,12 +273,12 @@
 
     :where(ul):not(:where([class~='not-prose'], [class~='not-prose'] *)) {
       color: var(--contrast-500);
-      font-family: var(--font-family-body);
+      /* font-family: var(--font-family-body); */
     }
 
     :where(ol):not(:where([class~='not-prose'], [class~='not-prose'] *)) {
       color: var(--contrast-500);
-      font-family: var(--font-family-body);
+      /* font-family: var(--font-family-body); */
     }
 
     :where(strong):not(:where([class~='not-prose'], [class~='not-prose'] *)) {
@@ -376,12 +393,16 @@ a.menu-item:hover,
 }
 
 .bm-overlay {
-  background: rgba(0, 0, 0, 0.3);
+ /* background: rgba(0, 0, 0, 0.3);*/
   z-index: 1000;
 }
 
 body.bm-overlay {
   overflow: hidden !important;
+}
+
+.bm-overlay.none {
+    background: none !important;
 }
 
 .nav-status-box {
@@ -489,7 +510,9 @@ body *,
   display: flex;
   justify-content: flex-start;
   pointer-events: auto;
-  background-color: var(--color-navbar);
+  /*background-color: var(--color-navbar);*/
+  backdrop-filter: blur(5px);
+
 }
 
 /* .nav-header-bar {
@@ -526,7 +549,7 @@ html, body {
   position: relative;
   min-height: 100vh;
   overflow: visible;
-  background-color: var(--color-menubg);
+  background-color: var(--color-menubg) !important;
 }
 
 @media screen and (max-width: 768px) {
@@ -622,7 +645,6 @@ html, body {
 }
 
 .bm-overlay {
-  background: rgba(0, 0, 0, 0.3);
   top: 0;
   left: 0;
 }
@@ -631,3 +653,15 @@ html, body {
 .card-background {
   background: var(--color-menubg);
 }
+
+.pagination-controls {
+    gap: 30%;
+    align-self: flex-start;
+}
+
+@media screen and (min-width: 768px) {
+  .pagination-controls {
+    gap: 60%;
+  }
+}
+

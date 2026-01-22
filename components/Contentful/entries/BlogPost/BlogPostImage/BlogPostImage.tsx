@@ -1,17 +1,16 @@
 'use client'
-
-import { useContentfulData } from '@/lib/contentful/provider'
+import { ComponentPropsWithoutRef } from 'react'
+import { useEntryField } from '@/lib/contentful/utils'
 import { ContentfulImage } from '../../../common/ContentfulImage'
 
-export function BlogPostImage() {
-  const { data: blogs } = useContentfulData()
-  
-  if (!blogs || !Array.isArray(blogs) || blogs.length === 0) {
-    return null
-  }
-  
-  const blog = blogs[0]
-  const field = blog?.banner ? { data: blog.banner } : { error: 'No banner found' }
-  
-  return <ContentfulImage field={field} data-testid="blog_featured_image" />
+type BaseProps = {
+  fieldPath?: string
+  className?: string 
+}
+
+type Props = BaseProps & Omit<ComponentPropsWithoutRef<typeof ContentfulImage>, 'field' | 'key'>
+
+export function BlogPostImage({ fieldPath, className, ...rest }: Props) { 
+  const field = useEntryField({ fieldPath })
+  return <ContentfulImage {...rest} field={field} className={className} />
 }

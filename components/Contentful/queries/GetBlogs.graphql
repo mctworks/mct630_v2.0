@@ -14,6 +14,46 @@ query GetBlogs(
       description
       body {
         json
+        links {
+          entries {
+            inline {
+              sys { id }
+              ... on BlogPost {
+                __typename
+                _id
+                title
+                slug
+              }
+            }
+            block {
+              sys { id }
+              ... on BlogPost {
+                __typename
+                _id
+                title
+                slug
+              }
+            }
+          }
+          assets {
+            block {
+              sys { id }
+              url
+              title
+              description
+              width
+              height
+            }
+            inline {
+              sys { id }
+              url
+              title
+              description
+              width
+              height
+            }
+          }
+        }
       }
       banner {
         __typename

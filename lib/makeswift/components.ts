@@ -5,6 +5,7 @@ import '@/components/Contentful/entries/BlogPost/BlogPostFeed/BlogPostFeed.makes
 import '@/components/Contentful/entries/BlogPost/BlogPostImage/BlogPostImage.makeswift'
 import '@/components/Contentful/entries/BlogPost/BlogPostRichText/BlogPostRichText.makeswift'
 import '@/components/Contentful/entries/BlogPost/BlogPostText/BlogPostText.makeswift'
+//import '@/components/Contentful/entries/BlogPost/StyledRichTextWrapper/StyledRichTextWrapper.makeswift'
 import '@/components/EmailForm/EmailForm.makeswift'
 import '@/components/Marquee/Marquee.makeswift'
 import '@/components/Section/Section.makeswift'

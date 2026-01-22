@@ -1,37 +1,24 @@
-'use client'
+// BlogPostText.tsx - PASS className TO ContentfulText
+import { ComponentPropsWithoutRef } from 'react'
+import { useEntryField } from '@/lib/contentful/utils'
+import { ContentfulText } from '../../../common/ContentfulText/ContentfulText'
+import { clsx } from 'clsx'
 
-import { useContentfulData } from '@/lib/contentful/provider'
-import { ContentfulText } from '../../../common/ContentfulText'
-
-// Helper to extract text field from blog
-function getFieldFromBlog(blog: any, fieldName: string) {
-  if (!blog) return { error: 'No blog data' }
-  
-  const value = blog[fieldName]
-  if (value === null || value === undefined) {
-    return { error: `Field "${fieldName}" not found` }
-  }
-  
-  return { data: value }
+type BaseProps = {
+  fieldPath?: string
+  className?: string
 }
 
-export function BlogPostText() {
-  const { data: blogs } = useContentfulData()
+type Props = BaseProps & Omit<ComponentPropsWithoutRef<typeof ContentfulText>, 'field'>
+
+export function BlogPostText({ fieldPath, className, ...rest }: Props) {
+  const field = useEntryField({ fieldPath })
   
-  if (!blogs || !Array.isArray(blogs) || blogs.length === 0) {
-    return null
-  }
-  
-  const blog = blogs[0]
-  
-  // Determine which field to show based on context
-  // You might want to make this configurable or create separate components
-  const field = 
-    getFieldFromBlog(blog, 'title') || 
-    getFieldFromBlog(blog, 'description') || 
-    getFieldFromBlog(blog, 'publishDate') || 
-    getFieldFromBlog(blog, 'author') || 
-    { error: 'No text field found' }
-  
-  return <ContentfulText field={field} />
+  return (
+    <ContentfulText 
+      {...rest} 
+      field={field} 
+      className={clsx(className, 'not-prose')} // PASS className TO ContentfulText
+    />
+  )
 }

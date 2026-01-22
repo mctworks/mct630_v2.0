@@ -6,12 +6,15 @@ import clsx from 'clsx'
 
 import { GetBlogsQuery } from '@/generated/contentful'
 import { useContentfulData } from '@/lib/contentful/provider'
+import { getAllBlogs, QueriedBlogPost } from '@/lib/contentful/fetchers'
 import TransitionLink from '@/components/TransitionLink/TransitionLink'
 
 type Props = {
   className?: string
+  titleClassName?: string
+  descriptionClassName?: string
+  dateClassName?: string
   itemsPerPage?: number
-  // Transition settings
   enableTransitions?: boolean
   animationType?: 'ActraiserDrop' | 'LogoSplash' | string
   rotationSpeed?: number
@@ -25,12 +28,15 @@ type Props = {
   splashImage?: string | { url: string; dimensions?: { width: number; height: number } }
 }
 
-type BlogItem = NonNullable<GetBlogsQuery['blogPostCollection']>['items'][number]
+// Use QueriedBlogPost directly since that's what getAllBlogs returns
+type BlogItem = QueriedBlogPost
 
 export function BlogPostFeed({ 
   className, 
   itemsPerPage = 3,
-  // Transition props with defaults
+  titleClassName,
+  descriptionClassName,
+  dateClassName,
   enableTransitions = true,
   animationType = 'ActraiserDrop',
   rotationSpeed = 360,
@@ -45,52 +51,80 @@ export function BlogPostFeed({
 }: Props) {
   const { data: blogs } = useContentfulData()
   const [currentPage, setCurrentPage] = useState(1)
-  const [fetchedBlogs, setFetchedBlogs] = useState<typeof blogs | null>(null)
+  const [fetchedBlogs, setFetchedBlogs] = useState<BlogItem[]>([])
+  
+  console.log('🔍 BlogPostFeed DEBUG:', {
+    contextBlogs: blogs,
+    contextIsArray: Array.isArray(blogs),
+    contextLength: Array.isArray(blogs) ? blogs.length : 0,
+    fetchedBlogsLength: fetchedBlogs.length
+  })
 
-  // Debugging: log blog feed data when mounted/updated
+  // SINGLE FIX: Replace the entire useEffect with this:
   useEffect(() => {
-    console.log('BlogPostFeed: received blogs', blogs)
-  }, [blogs])
-
-  // If context-provided blogs are missing, try the debug API fallback
-  useEffect(() => {
-    if (blogs && Array.isArray(blogs)) return
+    console.log('🔄 Checking data sources...')
+    
+    // 1. If context has data, use it (convert if needed)
+    if (blogs && Array.isArray(blogs) && blogs.length > 0) {
+      console.log('✅ Using context data:', blogs.length)
+      // Convert to QueriedBlogPost if needed
+      const converted = blogs.map(blog => blog as unknown as BlogItem)
+      setFetchedBlogs(converted)
+      return
+    }
+    
+    // 2. If context is empty, fetch directly
+    console.log('🔄 Context empty, fetching via getAllBlogs...')
+    
     let mounted = true
-    ;(async () => {
+    
+    const fetchDirectly = async () => {
       try {
-        const res = await fetch('/api/debug/blogs')
-        if (!res.ok) return
-        const json = await res.json()
-        if (mounted && Array.isArray(json.blogs)) setFetchedBlogs(json.blogs)
-      } catch (e) {
-        // ignore
+        const result = await getAllBlogs()
+        console.log('getAllBlogs result:', result)
+        
+        if (mounted && Array.isArray(result)) {
+          console.log('✅ Direct fetch successful:', result.length)
+          setFetchedBlogs(result)
+        }
+      } catch (error) {
+        console.error('Failed to fetch blogs:', error)
       }
-    })()
+    }
+    
+    fetchDirectly()
+    
     return () => {
       mounted = false
     }
-  }, [blogs])
+  }, [blogs]) // Only depends on blogs from context
 
-  const effectiveBlogs = Array.isArray(blogs) ? blogs : Array.isArray(fetchedBlogs) ? fetchedBlogs : null
+  // Use fetchedBlogs (either from context or direct fetch)
+  const effectiveBlogs = fetchedBlogs
 
-  if (!effectiveBlogs || !Array.isArray(effectiveBlogs)) {
+  console.log('📊 Final effectiveBlogs:', {
+    length: effectiveBlogs.length,
+    firstTitle: effectiveBlogs[0]?.title
+  })
+
+  if (!effectiveBlogs || !Array.isArray(effectiveBlogs) || effectiveBlogs.length === 0) {
     return (
       <div className={clsx(className, 'flex items-center justify-center p-4 sm:p-6 md:p-8')}>
         <div className="text-center">
-          <h2 className="text-lg font-bold text-red-600 sm:text-xl">Error loading blog posts</h2>
-          <p className="mt-2 text-sm text-gray-600 sm:text-base">Please try again later</p>
+          <h2 className="text-lg font-bold text-gray-600 sm:text-xl">No blog posts yet</h2>
+          <p className="mt-2 text-sm text-gray-600 sm:text-base">Check back soon for new content.</p>
         </div>
       </div>
     )
   }
 
+  // EVERYTHING BELOW THIS POINT IS YOUR ORIGINAL WORKING CODE
   const blogPosts = effectiveBlogs
     .slice(0, currentPage * itemsPerPage)
     .filter((item): item is BlogItem => item !== null)
 
   const hasMore = blogPosts.length < effectiveBlogs.length
 
-  // Normalize splashImage to the format TransitionLink expects
   const normalizedSplashImage = typeof splashImage === 'string' 
     ? splashImage 
     : splashImage && splashImage.url 
@@ -115,30 +149,49 @@ export function BlogPostFeed({
                 )}
               </div>
               <div className="flex flex-1 flex-col p-6">
-                <div className="flex-1 space-y-3">
-                  <h3 className="line-clamp-2 text-xl font-bold text-gray-900 group-hover:text-blue-600">
-                    {post?.title}
-                  </h3>
-                  <p className="line-clamp-3 text-gray-600">{post?.description}</p>
-                </div>
-                <div className="mt-4 flex items-center text-sm text-gray-500">
-                  {post?.publishDate && (
-                    <time dateTime={post.publishDate}>
-                      {new Date(post.publishDate).toLocaleDateString('en-US', {
-                        month: 'long',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })}
-                    </time>
-                  )}
-                </div>
-              </div>
+  <div className="flex-1 space-y-3">
+    {/* FIXED: Makeswift styles take priority */}
+<h3 className={clsx(
+  titleClassName, // Makeswift styles only
+  "line-clamp-2", // Keep for truncation
+  "group-hover:text-blue-600" // Keep hover effect
+  // REMOVED: text-xl font-bold text-gray-900
+)}>
+  {post?.title}
+</h3>
+
+<p className={clsx(
+  descriptionClassName, // Makeswift styles only  
+  "line-clamp-3" // Keep for truncation
+  // REMOVED: text-gray-600
+)}>
+  {post?.description}
+</p>
+  </div>
+  <div className="mt-4 flex items-center">
+    {post?.publishDate && (
+      <time 
+        dateTime={post.publishDate}
+        className={clsx(
+          dateClassName
+          // Optional: Add fallback styles if Makeswift doesn't set them
+          // "text-sm text-gray-500"
+        )}
+      >
+        {new Date(post.publishDate).toLocaleDateString('en-US', {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric',
+        })}
+      </time>
+    )}
+  </div>
+</div>
             </>
           )
 
           const cardClasses = "group relative flex flex-col overflow-hidden rounded-lg card-background shadow-lg transition-all duration-300 hover:shadow-xl"
 
-          // If transitions are enabled, wrap with TransitionLink
           if (enableTransitions) {
             return (
               <TransitionLink
@@ -161,7 +214,6 @@ export function BlogPostFeed({
             )
           }
 
-          // Without transitions, use regular link
           return (
             <a
               key={post?._id}

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { DM_Serif_Text, Inter, Roboto_Mono } from 'next/font/google'
+import { Poppins, Roboto_Mono } from 'next/font/google'
 import localFont from 'next/font/local'
 import { client } from '@/lib/makeswift/client'
 import '@/lib/makeswift/components'
@@ -10,32 +10,23 @@ import { ThemeConfig } from '@/components/ThemeConfig/ThemeConfig'
 import NavMenuPlus from '@/components/NavMenuPlus/NavMenuPlus'
 import './globals.css'
 
-const body = Inter({
-  display: 'swap',
-  subsets: ['latin'],
-  variable: '--font-family-body',
-})
-const heading = DM_Serif_Text({
+const body = Poppins({
   display: 'swap',
   subsets: ['latin'],
   weight: '400',
-  variable: '--font-family-heading',
+  variable: '--font-family-body',
 })
+const ztGatha = localFont({
+  display: 'swap',
+  src:'../public/fonts/zt-gatha/ZTGatha-SemiBold.ttf',
+  variable: '--font-family-zt-gatha',
+})
+const heading = ztGatha
+
 const mono = Roboto_Mono({
   display: 'swap',
   subsets: ['latin'],
   variable: '--font-family-mono',
-})
-const ztGatha = localFont({
-  src: [
-    {
-      path: '../public/fonts/zt-gatha/ZTGatha-SemiBold.ttf',
-      weight: '600',
-      style: 'normal',
-    },
-  ],
-  variable: '--font-family-zt-gatha',
-  display: 'swap',
 })
 
 export const metadata: Metadata = {

@@ -33,12 +33,30 @@ export type QueriedBlogPost = {
 }
 
 export async function getAllBlogs(): Promise<QueriedBlogPost[]> {
-  let allBlogs = []
+  const QUERY = `
+    query GetBlogsWithLinks($limit: Int!, $skip: Int!, $order: [BlogPostOrder]) {
+      blogPostCollection(limit: $limit, skip: $skip, order: $order) {
+        items {
+          __typename
+          _id
+          slug
+          title
+          description
+          body { json }
+          banner { url width height title description }
+          publishDate
+          author
+        }
+      }
+    }
+  `
+
+  let allBlogs: any[] = []
   let hasMore = true
   let skip = 0
 
   while (hasMore) {
-    const { blogPostCollection } = await client.request(GetBlogsDocument, {
+    const { blogPostCollection } = await client.request(QUERY, {
       limit: PAGINATION_LIMIT,
       skip,
       order: [BlogPostOrder.PublishDateDesc],
@@ -55,8 +73,70 @@ export async function getAllBlogs(): Promise<QueriedBlogPost[]> {
 }
 
 export async function getBlog(slug: string): Promise<QueriedBlogPost | null> {
-  const { blogPostCollection } = await client.request(GetBlogsDocument, {
-    filter: { slug },
-  })
-  return (blogPostCollection?.items[0] as unknown as QueriedBlogPost) ?? null
+  const QUERY = `
+    query GetBlogWithLinks($filter: BlogPostFilter) {
+      blogPostCollection(where: $filter, limit: 1) {
+        items {
+          __typename
+          _id
+          slug
+          title
+          description
+          body { json }
+          banner { url width height title description }
+          publishDate
+          author
+        }
+      }
+    }
+  `
+
+  const { blogPostCollection } = await client.request(QUERY, { filter: { slug } })
+  const blog = (blogPostCollection?.items[0] as unknown as QueriedBlogPost) ?? null
+
+  // Resolve embedded asset ids into actual asset objects so rich-text renderers can access URLs
+  if (blog && blog.body?.json) {
+    try {
+      const ids = new Set<string>()
+      const walk = (node: any) => {
+        if (!node || typeof node !== 'object') return
+        if (node.nodeType && (node.nodeType === 'embedded-asset-block' || node.nodeType === 'embedded-asset-inline')) {
+          const id = node?.data?.target?.sys?.id
+          if (id) ids.add(id)
+        }
+        if (Array.isArray(node.content)) node.content.forEach(walk)
+      }
+      walk(blog.body.json)
+
+      if (ids.size > 0) {
+        const assets: any[] = []
+        for (const id of Array.from(ids)) {
+          try {
+            const A = await client.request(`query GetAsset($id: String!) { asset(id: $id) { sys { id } url title description width height } }`, { id })
+            if (A && A.asset) assets.push(A.asset)
+          } catch (err) {
+            // ignore individual asset fetch failures
+          }
+        }
+
+        // Attach a minimal links structure expected by renderers
+        ;(blog as any).body.links = {
+          assets: {
+            block: assets,
+            inline: [],
+          },
+          entries: {
+            block: [],
+            inline: [],
+            hyperlink: [],
+          },
+          resources: { block: [], inline: [], hyperlink: [] },
+        }
+      }
+    } catch (err) {
+      // ignore
+    }
+  }
+
+  return blog
 }

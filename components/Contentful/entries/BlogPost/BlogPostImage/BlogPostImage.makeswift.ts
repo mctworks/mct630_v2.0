@@ -1,8 +1,6 @@
-import { Combobox } from '@makeswift/runtime/controls'
-
+import { Combobox, Style } from '@makeswift/runtime/controls'
 import { getFieldOptions } from '@/lib/contentful/utils'
 import { runtime } from '@/lib/makeswift/runtime'
-
 import { props } from '../../../common/ContentfulImage/ContentfulImage.makeswift'
 import { BlogPostImage } from './BlogPostImage'
 
@@ -11,6 +9,7 @@ runtime.registerComponent(BlogPostImage, {
   label: 'Contentful/Blog/Blog Image',
   props: {
     ...props,
+    className: Style(), // ADD THIS
     fieldPath: Combobox({
       label: 'Field',
       async getOptions(query) {

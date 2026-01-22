@@ -80,18 +80,54 @@ export function resolvePath<T extends string>(
 }
 
 export function useEntryField({ fieldPath }: { fieldPath?: string }): ResolvedField {
-  const { data, error } = useContentfulData()
-
+  const { data: blogs, error } = useContentfulData()
+  
   if (error) return { error: 'No entry found.' }
-
+  
   if (!fieldPath) return { error: 'Field path is not set.' }
-
-  const field = resolvePath(fieldPath, data)
-
-  if (!field) return { error: `Cannot find field at ${fieldPath}. Check the graphql query.` }
-
-  return { data: field }
+  
+  if (!blogs || !Array.isArray(blogs) || blogs.length === 0) {
+    return <ResolvedField>{ error: 'No blog data available' }
+  }
+  
+  const blog = blogs[0] as any // Type assertion to any
+  
+  const field = blog[fieldPath]
+  
+  if (field === undefined || field === null) {
+    return <ResolvedField>{ error: `Cannot find field "${fieldPath}"` }
+  }
+  
+  return <ResolvedField>{ data: field }
 }
+
+/* export function useEntryField({ fieldPath }: { fieldPath?: string }): ResolvedField {
+  const { data, error } = useContentfulData()
+  
+  console.log('🔍 useEntryField called:', {
+    fieldPath,
+    hasData: !!data,
+    dataType: typeof data,
+    isArray: Array.isArray(data),
+    data: data, // Log the actual data
+  })
+  
+  if (error) return { error: 'No entry found.' }
+  
+  if (!fieldPath) return { error: 'Field path is not set.' }
+  
+  const field = resolvePath(fieldPath, data)
+  
+  console.log('🔍 useEntryField result:', {
+    fieldPath,
+    field,
+    found: !!field,
+  })
+  
+  if (!field) return { error: `Cannot find field at ${fieldPath}. Check the graphql query.` }
+  
+  return { data: field }
+} */
 
 /* export const formatBlogs = (blogs: QueriedBlogPost[], includeBody: boolean = true): BlogPost[] => {
   return blogs.map(blog => formatBlog(blog, includeBody))

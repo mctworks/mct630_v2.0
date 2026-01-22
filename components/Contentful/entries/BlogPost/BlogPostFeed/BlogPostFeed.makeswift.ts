@@ -7,6 +7,15 @@ runtime.registerComponent(BlogPostFeed, {
   label: 'Contentful/Blog/Feed',
   props: {
     className: Style(),
+    titleClassName: Style({
+      properties: Style.All,
+    }),
+    descriptionClassName: Style({
+      properties: Style.All
+    }),
+    dateClassName: Style({
+      properties: Style.All
+    }),     
     itemsPerPage: Number({
       label: 'Items per page',
       defaultValue: 3,
