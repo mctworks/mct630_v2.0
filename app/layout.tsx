@@ -8,6 +8,7 @@ import { MakeswiftComponent } from '@makeswift/runtime/next'
 import { getSiteVersion } from '@makeswift/runtime/next/server'
 import { ThemeConfig } from '@/components/ThemeConfig/ThemeConfig'
 import NavMenuPlus from '@/components/NavMenuPlus/NavMenuPlus'
+import TransitionHandler from '@/components/TransitionHandler/TransitionHandler'
 import './globals.css'
 
 const body = Poppins({
@@ -67,6 +68,7 @@ export default async function RootLayout({
                   headerBar={undefined}
                 />
               )}
+              <TransitionHandler />
               
               <main id="page-wrap" className="page-wrap">
                 <div id="page-wrap-inner" className="page-wrap-inner">
