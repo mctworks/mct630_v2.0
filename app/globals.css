@@ -498,6 +498,30 @@ body *,
   mix-blend-mode: normal;
 }
 
+/* Skip link visible on keyboard focus */
+.focusable-skip-link {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  z-index: -1;
+}
+.focusable-skip-link:focus {
+  left: 1rem;
+  top: 1rem;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  z-index: 9999;
+  background: var(--color-menubg);
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  box-shadow: 0 0 0 3px rgba(0, 104, 255, 0.18);
+  color: var(--color-text);
+}
+
 /* Nav container sticky positioning */
 .nav-container {
   position: fixed;

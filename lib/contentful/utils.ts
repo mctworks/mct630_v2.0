@@ -84,20 +84,42 @@ export function useEntryField({ fieldPath }: { fieldPath?: string }): ResolvedFi
   
   if (error) return { error: 'No entry found.' }
   
-  if (!fieldPath) return { error: 'Field path is not set.' }
-  
   if (!blogs || !Array.isArray(blogs) || blogs.length === 0) {
-    return <ResolvedField>{ error: 'No blog data available' }
+    return <ResolvedField>{ error: 'No entry data available' }
   }
-  
-  const blog = blogs[0] as any // Type assertion to any
-  
-  const field = blog[fieldPath]
-  
+
+  const entry = blogs[0] as any // Type assertion to any
+
+  // If no explicit fieldPath is provided, attempt to pick a sensible default
+  if (!fieldPath) {
+    const fallbackCandidates = [
+      'title',
+      'name',
+      'description',
+      'body',
+      'content',
+      'banner',
+      'image',
+      'publishDate',
+      'author',
+    ]
+
+    for (const key of fallbackCandidates) {
+      if (entry[key] !== undefined && entry[key] !== null) {
+        return <ResolvedField>{ data: entry[key] }
+      }
+    }
+
+    return { error: 'Field path is not set.' }
+  }
+
+  // Support nested paths using resolvePath (handles dot-separated paths)
+  const field = resolvePath(fieldPath, entry)
+
   if (field === undefined || field === null) {
     return <ResolvedField>{ error: `Cannot find field "${fieldPath}"` }
   }
-  
+
   return <ResolvedField>{ data: field }
 }
 
@@ -190,6 +212,40 @@ export const formatBlog = (blog: QueriedBlogPost, includeBody: boolean = true): 
     }
   } catch (error) {
     console.error('Error formatting blog:', error, blog)
+    return null
+  }
+}
+
+// Format portfolio pieces into the same shape as BlogPost so we can reuse layout components
+export const formatPortfolio = (piece: any): BlogPost | null => {
+  try {
+    const title = piece?.name || piece?.title || 'Untitled Project'
+
+    let content = 'No content available'
+    if (piece?.body?.json) {
+      try {
+        const htmlContent = documentToHtmlString(piece.body.json)
+        content = htmlContent || (piece.description || 'No content available')
+      } catch (err) {
+        console.warn('Error converting portfolio rich text to HTML:', err)
+        content = piece.description || 'No content available'
+      }
+    } else if (piece?.description) {
+      content = piece.description
+    }
+
+    const image = piece.banner?.url ? { src: piece.banner.url, alt: piece.banner.description || title } : null
+
+    return {
+      title,
+      date: piece?.publishDate || piece?.projectId ? String(piece.projectId ?? '') : '',
+      content,
+      image,
+      author: undefined,
+      href: `/portfolio/${piece.slug || piece._id}`,
+    }
+  } catch (err) {
+    console.error('Error formatting portfolio piece:', err, piece)
     return null
   }
 }

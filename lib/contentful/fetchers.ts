@@ -140,3 +140,122 @@ export async function getBlog(slug: string): Promise<QueriedBlogPost | null> {
 
   return blog
 }
+
+export type QueriedPortfolioPiece = {
+  __typename: 'PortfolioPiece'
+  _id: string
+  slug?: string | null
+  projectId?: number | null
+  name?: string | null
+  description?: string | null
+  recentProject?: boolean | null
+  body?: {
+    __typename?: 'PortfolioPieceBody'
+    json?: { [key: string]: any } | null
+  } | null
+  banner?: {
+    __typename: 'Asset'
+    title?: string | null
+    description?: string | null
+    contentType?: string | null
+    fileName?: string | null
+    url?: string | null
+    width?: number | null
+    height?: number | null
+  } | null
+}
+
+export async function getAllPortfolioPieces(): Promise<QueriedPortfolioPiece[]> {
+  const QUERY = `
+    query GetPortfolioPieces($limit: Int!, $skip: Int!) {
+      portfolioPieceCollection(limit: $limit, skip: $skip) {
+        items {
+          __typename
+          _id
+          slug
+          projectId
+          name
+          description
+          recentProject
+          body { json }
+          banner { url width height title description }
+        }
+      }
+    }
+  `
+
+  let all: any[] = []
+  let hasMore = true
+  let skip = 0
+
+  while (hasMore) {
+    const { portfolioPieceCollection } = await client.request(QUERY, { limit: PAGINATION_LIMIT, skip })
+    const items = portfolioPieceCollection?.items ?? []
+    all.push(...items)
+    hasMore = items.length === PAGINATION_LIMIT
+    skip += PAGINATION_LIMIT
+  }
+
+  return all as unknown as QueriedPortfolioPiece[]
+}
+
+export async function getPortfolioPiece(slug: string): Promise<QueriedPortfolioPiece | null> {
+  const QUERY = `
+    query GetPortfolioPiece($filter: PortfolioPieceFilter) {
+      portfolioPieceCollection(where: $filter, limit: 1) {
+        items {
+          __typename
+          _id
+          slug
+          projectId
+          name
+          description
+          recentProject
+          body { json }
+          banner { url width height title description }
+        }
+      }
+    }
+  `
+
+  const { portfolioPieceCollection } = await client.request(QUERY, { filter: { slug } })
+  const piece = (portfolioPieceCollection?.items[0] as unknown as QueriedPortfolioPiece) ?? null
+
+  if (piece && piece.body?.json) {
+    // resolve embedded assets like getBlog
+    try {
+      const ids = new Set<string>()
+      const walk = (node: any) => {
+        if (!node || typeof node !== 'object') return
+        if (node.nodeType && (node.nodeType === 'embedded-asset-block' || node.nodeType === 'embedded-asset-inline')) {
+          const id = node?.data?.target?.sys?.id
+          if (id) ids.add(id)
+        }
+        if (Array.isArray(node.content)) node.content.forEach(walk)
+      }
+      walk(piece.body.json)
+
+      if (ids.size > 0) {
+        const assets: any[] = []
+        for (const id of Array.from(ids)) {
+          try {
+            const A = await client.request(`query GetAsset($id: String!) { asset(id: $id) { sys { id } url title description width height } }`, { id })
+            if (A && A.asset) assets.push(A.asset)
+          } catch (err) {
+            // ignore
+          }
+        }
+
+        ;(piece as any).body.links = {
+          assets: { block: assets, inline: [] },
+          entries: { block: [], inline: [], hyperlink: [] },
+          resources: { block: [], inline: [], hyperlink: [] },
+        }
+      }
+    } catch (err) {
+      // ignore
+    }
+  }
+
+  return piece
+}

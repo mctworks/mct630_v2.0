@@ -3,7 +3,6 @@ import Image, { ImageProps } from 'next/image'
 import clsx from 'clsx'
 import { isDevelopment } from 'utils/isDevelopment'
 
-import { Warning } from '@/components/Warning'
 
 import { ResolvedField, isAsset } from '../../../../lib/contentful/utils'
 
@@ -15,18 +14,23 @@ type Props = {
 } & Partial<ImageProps>
 
 export function ContentfulImage({ className, field, square, ...rest }: Props) {
+  // On missing or invalid fields, avoid rendering visible warnings (no placeholders).
+  // Instead log details to the console for debugging and return null so the page layout
+  // doesn't show developer UI in preview or production.
   if ('error' in field) {
-    if (isDevelopment()) return <Warning className={className}>{field.error}</Warning>
+    if (typeof window !== 'undefined') console.warn('ContentfulImage: field error', field.error)
     return null
   }
 
-  if (!isAsset(field.data)) {
-    if (isDevelopment()) return <Warning className={className}>Field is not an asset.</Warning>
+  // Accept either a true Contentful Asset or any object with a URL property.
+  const data: any = field.data
+  if (!data || typeof data !== 'object') {
+    if (typeof window !== 'undefined') console.warn('ContentfulImage: field is not an object', field.data)
     return null
   }
 
-  if (!field.data.url) {
-    if (isDevelopment()) return <Warning className={className}>Asset is missing URL.</Warning>
+  if (!data.url || typeof data.url !== 'string') {
+    if (typeof window !== 'undefined') console.warn('ContentfulImage: asset is missing URL', data)
     return null
   }
 
