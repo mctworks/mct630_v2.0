@@ -1,10 +1,10 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { ReactNode, useRef, useCallback, useEffect } from 'react'
+import { ReactNode, useRef, useCallback, useEffect, HTMLAttributes } from 'react'
 import { gsap } from 'gsap'
 
-interface TransitionLinkProps {
+interface TransitionLinkProps extends HTMLAttributes<HTMLDivElement> {
   href?: { href: string; target?: '_self' | '_blank' }
   className?: string
   containerClassName?: string
@@ -13,6 +13,7 @@ interface TransitionLinkProps {
   transitionDuration?: number
   rotationSpeed?: number
   zoomScale?: number
+  fadeOutDuration?: number
   splashImage?: string | { url: string; dimensions: { width: number; height: number } } | undefined
   gradientStart?: string
   gradientEnd?: string
@@ -35,6 +36,9 @@ export function TransitionLink({
   splashScale = 3,
   animatedPathId = 'all',
   strokeWidth = 3,
+  fadeOutDuration = 0.5,
+  // capture any additional HTML attributes (e.g. `aria-label`)
+  ...rest
 }: TransitionLinkProps) {
   const router = useRouter()
   const containerRef = useRef<HTMLDivElement>(null)
@@ -84,6 +88,7 @@ export function TransitionLink({
   }, [])
 
   const handleActraiserDrop = useCallback((e: React.MouseEvent) => {
+    console.log('TransitionLink: handleActraiserDrop start', { href, rotationSpeed, zoomScale, transitionDuration, fadeOutDuration })
     if (!href?.href) return
     e.preventDefault()
 
@@ -121,11 +126,24 @@ export function TransitionLink({
 
     pageWrap.classList.add('transitioning')
 
+    const outDuration = typeof fadeOutDuration === 'number' ? fadeOutDuration : transitionDuration
+    const startPath = typeof window !== 'undefined' ? window.location.pathname + window.location.search : ''
+
     setTimeout(() => {
+      console.log('TransitionLink: navigating after ActraiserDrop', { to: href.href })
       sessionStorage.setItem('needsFadeIn', 'true')
       router.push(href.href)
-    }, transitionDuration * 1000)
-  }, [zoomScale, rotationSpeed, transitionDuration, href, router])
+
+      // Safety fallback: if navigation didn't happen (rare race), try again after 2s
+      setTimeout(() => {
+        const currentPath = typeof window !== 'undefined' ? window.location.pathname + window.location.search : ''
+        if (currentPath === startPath) {
+          console.warn('TransitionLink: fallback router.push after ActraiserDrop - navigation did not occur on first attempt', { to: href.href })
+          router.push(href.href)
+        }
+      }, 2000)
+    }, outDuration * 1000)
+  }, [zoomScale, rotationSpeed, transitionDuration, fadeOutDuration, href, router])
 
   const handleLogoSplash = useCallback((e: React.MouseEvent) => {
     try {
@@ -665,23 +683,15 @@ export function TransitionLink({
     }
   }, [animatedPathId, gradientStart, gradientEnd, splashScale, strokeWidth, href, router])
 
-  const onClick = useCallback((e: React.MouseEvent) => {
+  const activate = useCallback((e?: any) => {
     if (!href?.href) return
 
-    const target = e.currentTarget
-    if (target.hasAttribute('data-makeswift-animation') || 
-        target.closest('[data-makeswift-animation]')) {
-      return
-    }
-    
-    e.preventDefault()
-
-    if (href.target === '_blank') {
-      window.open(href.href, '_blank')
-      return
-    }
-
     try {
+      if (href.target === '_blank') {
+        window.open(href.href, '_blank')
+        return
+      }
+
       if (animationType === 'LogoSplash') {
         handleLogoSplash(e)
       } else {
@@ -693,15 +703,38 @@ export function TransitionLink({
     }
   }, [href, animationType, handleActraiserDrop, handleLogoSplash, router])
 
+  const onClick = useCallback((e: React.MouseEvent) => {
+    if (!href?.href) return
+
+    const target = e.currentTarget as HTMLElement
+    if (target.hasAttribute('data-makeswift-animation') || target.closest('[data-makeswift-animation]')) {
+      console.warn('TransitionLink: click ignored due to makeswift animation element', { target })
+      return
+    }
+    e.preventDefault()
+    activate(e)
+  }, [href, activate])
+
   return (
     <div 
       ref={containerRef} 
-      className={containerClassName}
+      className={`${containerClassName ?? ''} focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]`}
       style={{ 
         cursor: href?.href ? 'pointer' : 'default',
         display: 'inline-block'
-      }} 
+      }}
+      role={rest.role ?? (href?.href ? 'link' : undefined)}
+      tabIndex={rest.tabIndex ?? (href?.href ? 0 : undefined)}
       onClick={href?.href ? onClick : undefined}
+      onKeyDown={(e) => {
+        if (!href?.href) return
+        const key = e.key
+        if (key === 'Enter' || key === ' ' || key === 'Spacebar') {
+          e.preventDefault()
+          activate(e)
+        }
+      }}
+      {...rest}
     >
       {children || <div>Transition Link</div>}
     </div>

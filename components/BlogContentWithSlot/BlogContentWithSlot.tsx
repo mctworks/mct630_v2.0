@@ -254,10 +254,14 @@ export default function BlogContentWithSlot({
         const blog = validBlogs[0]
         
         console.log('BlogContentWithSlot - body.style:', body?.style)
-console.log('BlogContentWithSlot - h1.style:', h1?.style)
+        console.log('BlogContentWithSlot - h1.style:', h1?.style)
+        // Log the banner payload to help diagnose missing banner images on live pages
+        console.log('BlogContentWithSlot - banner object:', blog?.banner)
 
         return (
-          <div className={className}>
+          <div className={className} id="blog-content">
+            {/* Skip link for keyboard users */}
+            <a href="#blog-content" className="focusable-skip-link">Skip to main content</a>
             <div className="breadcrumbs" style={{ marginBottom: '20px' }}>
               <a href="/">Home</a> &gt;
               <a href="/blog">Blog</a> &gt;
