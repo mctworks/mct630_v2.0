@@ -114,7 +114,7 @@ export function PortfolioPieceFeed({
       </>
     )
 
-    const cardClasses = "group relative flex flex-col overflow-hidden rounded-lg card-background shadow-lg transition-all duration-300 hover:shadow-xl"
+    const cardClasses = "group relative flex flex-col overflow-hidden rounded-lg card-background shadow-lg transition-all duration-300 hover:shadow-xl mx-auto max-w-md md:max-w-none"
 
     if (enableTransitions) {
       return (

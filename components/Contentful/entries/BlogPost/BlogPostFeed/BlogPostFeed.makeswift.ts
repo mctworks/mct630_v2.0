@@ -21,6 +21,13 @@ runtime.registerComponent(BlogPostFeed, {
       defaultValue: 3,
       min: 1,
     }),
+    showViewMoreButton: Checkbox({
+      label: 'Show "View more posts" button',
+      defaultValue: true,
+    }),
+    viewMoreButtonClassName: Style({
+      properties: Style.All,
+    }),
     // Transition controls
     enableTransitions: Checkbox({
       label: 'Enable Transitions',

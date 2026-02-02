@@ -727,6 +727,7 @@ html, body {
 
   .center-single-column > * {
     justify-self: center;
+    justify-content: center;
   }
 
   /* If a Makeswift container (e.g. `mx-auto px-4 py-10 ... max-w-none`) wraps

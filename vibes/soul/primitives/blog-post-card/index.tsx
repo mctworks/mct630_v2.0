@@ -51,7 +51,7 @@ export function BlogPostCard({
   return (
     <article
       className={clsx(
-        'group @container relative w-full max-w-md font-(family-name:--blog-post-card-font-family,var(--font-family-body))',
+        'group @container relative w-full max-w-md mx-auto font-(family-name:--blog-post-card-font-family,var(--font-family-body))',
         className
       )}
     >

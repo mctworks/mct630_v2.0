@@ -26,6 +26,8 @@ type Props = {
   animatedPathId?: string
   strokeWidth?: number
   splashImage?: string | { url: string; dimensions?: { width: number; height: number } }
+  showViewMoreButton?: boolean
+  viewMoreButtonClassName?: string
 }
 
 // Use QueriedBlogPost directly since that's what getAllBlogs returns
@@ -48,6 +50,8 @@ export function BlogPostFeed({
   animatedPathId = 'all',
   strokeWidth = 3,
   splashImage,
+  showViewMoreButton = true,
+  viewMoreButtonClassName,
 }: Props) {
   const { data: blogs } = useContentfulData()
   const [currentPage, setCurrentPage] = useState(1)
@@ -60,7 +64,7 @@ export function BlogPostFeed({
     fetchedBlogsLength: fetchedBlogs.length
   })
 
-  // SINGLE FIX: Replace the entire useEffect with this:
+  
   useEffect(() => {
     console.log('🔄 Checking data sources...')
     
@@ -131,9 +135,27 @@ export function BlogPostFeed({
       ? { url: splashImage.url, dimensions: splashImage.dimensions || { width: 0, height: 0 } }
       : undefined
 
+  // Calculate the number of items currently displayed
+  const itemsDisplayed = Math.min(blogPosts.length, itemsPerPage)
+  
+  // Determine if we should use single column layout
+  const shouldUseSingleColumn = itemsDisplayed === 1
+  
   return (
     <div className={clsx(className, '@container space-y-12')} data-blogs-count={effectiveBlogs.length}>
-      <div className="grid grid-cols-1 gap-8 @sm:grid-cols-2 @xl:grid-cols-3 center-single-column">
+      <div 
+        className={clsx(
+          "grid gap-8 center-single-column",
+          shouldUseSingleColumn 
+            ? "grid-cols-1" // Force single column when only 1 item
+            : "grid-cols-1 @sm:grid-cols-2 @xl:grid-cols-3" // Default responsive grid
+        )}
+        style={
+          shouldUseSingleColumn 
+            ? { gridTemplateColumns: 'repeat(1, minmax(0, 1fr))' } // Force explicit single column
+            : undefined
+        }
+      >
         {blogPosts.map(post => {
           const cardContent = (
             <>
@@ -208,6 +230,7 @@ export function BlogPostFeed({
                 animatedPathId={animatedPathId}
                 strokeWidth={strokeWidth}
                 splashImage={normalizedSplashImage}
+                
               >
                 {cardContent}
               </TransitionLink>
@@ -227,17 +250,20 @@ export function BlogPostFeed({
         })}
       </div>
 
-      {hasMore && (
-        <div className="flex justify-center">
-          <button
-            onClick={() => setCurrentPage(prev => prev + 1)}
-            className="inline-flex items-center rounded-lg bg-blue-600 px-6 py-3 font-medium text-white transition-colors hover:bg-blue-700"
-            aria-label="Load more blog posts"
-          >
-            View more posts
-          </button>
-        </div>
-      )}
+  {hasMore && showViewMoreButton && (
+    <div className="flex justify-center">
+      <button
+        onClick={() => setCurrentPage(prev => prev + 1)}
+        className={clsx(
+          viewMoreButtonClassName, // Add this line
+          "inline-flex items-center rounded-lg bg-blue-600 px-6 py-3 font-medium text-white transition-colors hover:bg-blue-700"
+        )}
+        aria-label="Load more blog posts"
+      >
+        View more posts
+      </button>
+    </div>
+  )}
     </div>
   )
 }
