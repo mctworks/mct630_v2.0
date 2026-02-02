@@ -55,7 +55,7 @@ export function BlogPostList({
 
         return (
           <div className={clsx('@container', className)}>
-            <div className="mx-auto grid grid-cols-1 gap-x-5 gap-y-8 @md:grid-cols-2 @xl:gap-y-10 @3xl:grid-cols-3">
+            <div className="mx-auto grid grid-cols-1 gap-x-5 gap-y-8 @md:grid-cols-2 @xl:gap-y-10 @3xl:grid-cols-3 center-single-column">
               {blogPosts.map(({ ...post }) => (
                 <BlogPostCardClient key={post.href} {...post} />
               ))}

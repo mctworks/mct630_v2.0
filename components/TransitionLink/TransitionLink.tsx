@@ -148,8 +148,28 @@ export function TransitionLink({
   const handleLogoSplash = useCallback((e: React.MouseEvent) => {
     try {
       e.preventDefault()
-      const container = containerRef.current
-      if (!container) throw new Error('Container not found')
+      // Prefer the stable ref, but if it's null (race/unmount), fall back to
+      // the clicked element (`e.currentTarget`) so we can still find the
+      // in-DOM SVG and perform the LogoSplash animation rather than
+      // immediately navigating away.
+      let container = containerRef.current as HTMLDivElement | null
+      let fallbackUsed = false
+      if (!container) {
+        const fallback = e.currentTarget as HTMLElement
+        if (fallback) {
+          container = fallback as HTMLDivElement
+          fallbackUsed = true
+        }
+      }
+
+      console.log('TransitionLink: handleLogoSplash start', { href, containerFound: !!container, fallbackUsed })
+      if (!container) {
+        // No container available at all — fall back to navigation but log
+        // diagnostic info for debugging.
+        console.warn('TransitionLink: container not found at all, falling back to navigation', { href })
+        if (href?.href) router.push(href.href)
+        return
+      }
 
       const isInEditor = typeof window !== 'undefined' && window.location.search.includes('makeswift=1')
       
@@ -162,6 +182,7 @@ export function TransitionLink({
 
       import('gsap').then(({ gsap }) => {
         // performLogoSplashAnimation may be async when loading external SVGs
+        console.log('TransitionLink: launching LogoSplash animation')
         Promise.resolve(performLogoSplashAnimation(gsap, container)).catch(err => {
           console.error('LogoSplash animation failed:', err)
           if (href?.href) router.push(href.href)
@@ -207,8 +228,23 @@ export function TransitionLink({
       }
 
       if (!svg) {
-        svg = container.querySelector<SVGElement>('#logo') || container.querySelector<SVGElement>('svg')
+        // Fallback to in-DOM SVG (the EnhancedSVG injected svg). It's possible
+        // the inline SVG hasn't been (re)injected yet after client-side
+        // navigation; retry a few times with a short delay before giving up.
+        const tryFindInDom = async () => {
+          let found: SVGElement | null = null
+          for (let attempt = 0; attempt < 6; attempt++) {
+            found = container.querySelector<SVGElement>('#logo') || container.querySelector<SVGElement>('svg')
+            if (found) return found
+            await new Promise(r => setTimeout(r, 60))
+          }
+          return null
+        }
+
+        svg = await tryFindInDom()
       }
+
+      console.log('TransitionLink: performLogoSplashAnimation selected SVG', { hasSvg: !!svg, splashImage })
 
       if (!svg) {
         throw new Error('SVG not found for LogoSplash animation')
@@ -255,21 +291,24 @@ export function TransitionLink({
         ? []
         : String(animatedPathId).split(',').map(p => p.trim()).filter(Boolean)
 
-      // Determine which paths to animate. Support 'all' to animate every <path>
-      let pathsToAnimate: SVGPathElement[] = []
+      // Determine which elements to animate. Support 'all' to animate every <path>
+      // We treat the selection as generic SVGElement so text elements (e.g. <text>
+      // with id 'codeslash') are also considered and animated using
+      // getComputedTextLength where available.
+      let pathsToAnimate: SVGElement[] = []
       if (normalizedAnimatePaths.length > 0 && !normalizedAnimatePaths.includes('none')) {
         if (normalizedAnimatePaths.length === 1 && normalizedAnimatePaths[0] === 'all') {
-          pathsToAnimate = Array.from(clonedSvg.querySelectorAll<SVGPathElement>('path'))
+          pathsToAnimate = Array.from(clonedSvg.querySelectorAll<SVGElement>('path'))
         } else {
-          const selected: SVGPathElement[] = []
+          const selected: SVGElement[] = []
           normalizedAnimatePaths.forEach(id => {
             const cleanId = id.replace(/^#/, '').trim()
             if (!cleanId) return
-            // Exact match
+            // Exact match (accept any SVG element)
             try {
               const exact = clonedSvg.querySelector(`#${CSS.escape(cleanId)}`)
-              if (exact && exact instanceof SVGPathElement) {
-                selected.push(exact)
+              if (exact) {
+                selected.push(exact as SVGElement)
                 return
               }
             } catch (err) {
@@ -278,7 +317,7 @@ export function TransitionLink({
             // Ends-with match
             const ends = Array.from(clonedSvg.querySelectorAll('[id]')).filter(el => 
               el.id.endsWith(`-${cleanId}`) || el.id.endsWith(`_${cleanId}`) || el.id === cleanId
-            ) as SVGPathElement[]
+            ) as SVGElement[]
             if (ends.length > 0) {
               ends.forEach(el => selected.push(el))
               return
@@ -286,7 +325,7 @@ export function TransitionLink({
             // Includes match
             const includes = Array.from(clonedSvg.querySelectorAll('[id]')).filter(el => 
               el.id.includes(cleanId)
-            ) as SVGPathElement[]
+            ) as SVGElement[]
             if (includes.length > 0) {
               includes.forEach(el => selected.push(el))
               return
@@ -298,6 +337,8 @@ export function TransitionLink({
 
       // Create a Set for quick lookup of animated paths
       const animatedPathSet = new Set(pathsToAnimate)
+
+      console.log('TransitionLink: pathsToAnimate selection', { requested: normalizedAnimatePaths, found: pathsToAnimate.length })
 
       // Find ALL visible elements for color wave (everything except animated paths)
       const allElements = Array.from(clonedSvg.querySelectorAll<SVGElement>('*'))
@@ -351,49 +392,61 @@ export function TransitionLink({
 
         const animatedPathPairs: Array<{path1: SVGPathElement, path2: SVGPathElement, original: SVGPathElement, pathLength: number}> = []
 
-        pathsToAnimate.forEach(originalPath => {
-          if (!('getTotalLength' in originalPath)) return
+        pathsToAnimate.forEach(originalEl => {
+          // Support elements that provide getTotalLength (paths) or
+          // getComputedTextLength (text glyphs). Fallback to 0 and skip
+          // if neither is available or length is zero.
+          let elLength = 0
+          try {
+            if ('getTotalLength' in originalEl && typeof (originalEl as any).getTotalLength === 'function') {
+              elLength = (originalEl as any).getTotalLength()
+            } else if ('getComputedTextLength' in originalEl && typeof (originalEl as any).getComputedTextLength === 'function') {
+              elLength = (originalEl as any).getComputedTextLength()
+            }
+          } catch (err) {
+            // ignore errors while probing length
+          }
 
-          const pathLength = originalPath.getTotalLength()
-          
+          if (!elLength || elLength === 0) return
+
           // Create two copies for dual-ended animation
-          const path1 = originalPath.cloneNode(true) as SVGPathElement
-          const path2 = originalPath.cloneNode(true) as SVGPathElement
-          
+          const path1 = originalEl.cloneNode(true) as SVGElement
+          const path2 = originalEl.cloneNode(true) as SVGElement
+
           path1.id = `path1-${Math.random().toString(36).substr(2, 9)}`
           path2.id = `path2-${Math.random().toString(36).substr(2, 9)}`
-          
-          // Insert the cloned paths
-          originalPath.insertAdjacentElement('afterend', path1)
-          originalPath.insertAdjacentElement('afterend', path2)
-          
-          // Hide the original path
-          originalPath.style.display = 'none'
 
-          // Style the animated paths - use gradient stroke
-          gsap.set([path1, path2], { 
+          // Insert the cloned elements after the original
+          originalEl.insertAdjacentElement('afterend', path1 as Element)
+          originalEl.insertAdjacentElement('afterend', path2 as Element)
+
+          // Hide the original element
+          try { (originalEl as any).style.display = 'none' } catch (err) { /* noop */ }
+
+          // Style the animated elements - use gradient stroke
+          gsap.set([path1, path2], {
             stroke: 'url(#splash-gradient)',
             strokeWidth: strokeWidth,
             fill: 'none',
             opacity: 0
           })
 
-          // Set up dual-ended animation - FULL path length for each
-          gsap.set([path1, path2], { 
-            strokeDasharray: pathLength
+          // Set up dual-ended animation - FULL element length for each
+          gsap.set([path1, path2], {
+            strokeDasharray: elLength
           })
 
           // Path1 animates from START (0) to MIDDLE
-          gsap.set(path1, { 
-            strokeDashoffset: pathLength // Start hidden at the end
+          gsap.set(path1, {
+            strokeDashoffset: elLength // Start hidden at the end
           })
 
           // Path2 animates from END to MIDDLE  
-          gsap.set(path2, { 
-            strokeDashoffset: -pathLength // Start hidden at the beginning
+          gsap.set(path2, {
+            strokeDashoffset: -elLength // Start hidden at the beginning
           })
 
-          animatedPathPairs.push({ path1, path2, original: originalPath, pathLength })
+          animatedPathPairs.push({ path1: path1 as any, path2: path2 as any, original: originalEl as any, pathLength: elLength })
         })
 
         // Animate all path pairs simultaneously - both converge to center
@@ -707,10 +760,15 @@ export function TransitionLink({
     if (!href?.href) return
 
     const target = e.currentTarget as HTMLElement
-    if (target.hasAttribute('data-makeswift-animation') || target.closest('[data-makeswift-animation]')) {
-      console.warn('TransitionLink: click ignored due to makeswift animation element', { target })
-      return
+    const makeswiftEl = target.hasAttribute('data-makeswift-animation') ? target : target.closest('[data-makeswift-animation]')
+    if (makeswiftEl) {
+      // Previously we silently ignored clicks when a Makeswift animation
+      // marker was present — this can lead to no navigation and no
+      // transition animation. Instead, log the situation and proceed with
+      // activation so the user flow still works while we gather diagnostics.
+      console.warn('TransitionLink: data-makeswift-animation marker present on target or ancestor — proceeding with safe activation', { target, makeswiftEl })
     }
+
     e.preventDefault()
     activate(e)
   }, [href, activate])

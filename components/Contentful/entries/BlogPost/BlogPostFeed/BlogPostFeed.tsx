@@ -133,7 +133,7 @@ export function BlogPostFeed({
 
   return (
     <div className={clsx(className, '@container space-y-12')} data-blogs-count={effectiveBlogs.length}>
-      <div className="grid grid-cols-1 gap-8 @sm:grid-cols-2 @xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-8 @sm:grid-cols-2 @xl:grid-cols-3 center-single-column">
         {blogPosts.map(post => {
           const cardContent = (
             <>

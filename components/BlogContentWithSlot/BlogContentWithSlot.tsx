@@ -367,7 +367,7 @@ export default function BlogContentWithSlot({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch center-single-column">
                 {/* Newest blog card - hidden if on newest post */}
                 {!pagination.isNewest && pagination.newest && (
                   <TransitionLink

@@ -126,7 +126,7 @@ export function EnhancedSVG({
 
   // Single effect to handle everything
   useEffect(() => {
-    if (!svg?.url || !containerRef.current || svgProcessedRef.current) return
+    if (!svg?.url || !containerRef.current) return
 
     console.log('🚀 Initializing EnhancedSVG...')
 
@@ -136,13 +136,14 @@ export function EnhancedSVG({
         if (!text.includes('<svg')) return
         
         setSvgContent(text)
-        svgProcessedRef.current = true
-        
+
         const wrapper = containerRef.current?.querySelector('.icon-fill')
         if (!wrapper) return
-        
-        // Inject SVG
-        wrapper.innerHTML = text
+
+        // Inject SVG (idempotent)
+        if (!wrapper.querySelector('svg')) {
+          wrapper.innerHTML = text
+        }
         const svgEl = wrapper.querySelector('svg')
         if (!svgEl) return
         
@@ -156,9 +157,18 @@ export function EnhancedSVG({
           console.log('🎬 Setting up animation...')
           setTimeout(() => setupAnimation(svgEl), 200)
         }
+        // Mark as processed once we've successfully injected and setup
+        svgProcessedRef.current = true
       })
       .catch(console.error)
   }, [svg?.url, enableGradientDraw, applyColorToSVG, strokeColor])
+
+  /* NOTE: The effect that re-injects the SVG when the wrapper is cleared
+     is intentionally placed AFTER `setupAnimation` is declared below to
+     avoid a Temporal Dead Zone runtime ReferenceError when React renders
+     (trying to reference `setupAnimation` before it is initialized).
+     See earlier change which had this effect above `setupAnimation` and
+     caused `Cannot access 'setupAnimation' before initialization`. */
 
   // Effect for theme changes
   useEffect(() => {
@@ -306,6 +316,28 @@ export function EnhancedSVG({
     }
   }, [strokeColor, enableGradientDraw, svgContent, setupAnimation])
 
+  // If the DOM was mutated after initial processing (e.g., some other
+  // script accidentally cleared the `.icon-fill` innerHTML), ensure the
+  // SVG is re-injected and animations are restored. This keeps the
+  // component resilient during client-side navigation or overlays.
+  useEffect(() => {
+    if (!containerRef.current || !svgContent) return
+    const wrapper = containerRef.current.querySelector('.icon-fill')
+    if (!wrapper) return
+    const existing = wrapper.querySelector('svg')
+    if (!existing) {
+      // Re-inject the previously fetched SVG content
+      wrapper.innerHTML = svgContent
+      const svgEl = wrapper.querySelector('svg')
+      if (svgEl) {
+        applyColorToSVG(svgEl, strokeColor)
+        if (enableGradientDraw) {
+          setTimeout(() => setupAnimation(svgEl), 200)
+        }
+      }
+    }
+  }, [svgContent, enableGradientDraw, applyColorToSVG, setupAnimation, strokeColor])
+
   const cleanupAnimation = useCallback((svgEl: SVGElement | null) => {
     if (animationRef.current) {
       animationRef.current.kill()
@@ -347,6 +379,87 @@ export function EnhancedSVG({
       })
     }
   }, [strokeColor])
+
+  // Runtime repair: if the injected SVG is removed by other scripts or
+  // navigation artifacts, attempt to re-inject or refetch it automatically.
+  const observerRef = useRef<MutationObserver | null>(null)
+
+  const ensureSVGInjected = useCallback(async () => {
+    try {
+      if (!containerRef.current || !svg || !svg.url) return
+      const wrapper = containerRef.current.querySelector('.icon-fill')
+      if (!wrapper) return
+      const existing = wrapper.querySelector('svg')
+      if (existing) return // already present
+
+      // If we have cached svgContent, re-insert it
+      if (svgContent) {
+        console.warn('EnhancedSVG: wrapper lost <svg>, re-injecting cached content')
+        // Capture a stack trace to help identify the code path that removed
+        // the injected SVG so we can find the culprit in production.
+        console.trace('EnhancedSVG: stack trace for lost-svg detection')
+        wrapper.innerHTML = svgContent
+        const svgEl = wrapper.querySelector('svg')
+        if (svgEl) {
+          applyColorToSVG(svgEl, strokeColor)
+          if (enableGradientDraw) setTimeout(() => setupAnimation(svgEl), 200)
+        }
+        return
+      }
+
+      // Otherwise try to fetch again (network failure may have occurred earlier)
+      console.warn('EnhancedSVG: wrapper lost <svg> and no cached content, refetching', svg.url)
+      console.trace('EnhancedSVG: stack trace for lost-svg refetch')
+      const resp = await fetch(svg.url, { cache: 'no-cache' })
+      if (!resp.ok) {
+        console.error('EnhancedSVG: refetch failed', resp.status)
+        return
+      }
+      const text = await resp.text()
+      if (!text.includes('<svg')) {
+        console.error('EnhancedSVG: refetch returned invalid svg')
+        return
+      }
+      setSvgContent(text)
+      wrapper.innerHTML = text
+      const svgEl = wrapper.querySelector('svg')
+      if (svgEl) {
+        applyColorToSVG(svgEl, strokeColor)
+        if (enableGradientDraw) setTimeout(() => setupAnimation(svgEl), 200)
+      }
+    } catch (err) {
+      console.error('EnhancedSVG: ensureSVGInjected error', err)
+    }
+  }, [svg, svgContent, applyColorToSVG, enableGradientDraw, setupAnimation, strokeColor])
+
+  useEffect(() => {
+    if (!containerRef.current) return
+    const wrapper = containerRef.current.querySelector('.icon-fill')
+    if (!wrapper) return
+
+    // Observe childList changes so we can repair accidental removals
+    observerRef.current = new MutationObserver((mutations) => {
+      for (const m of mutations) {
+        if (m.type === 'childList') {
+          const wrapperHasSvg = !!wrapper.querySelector('svg')
+          if (!wrapperHasSvg) {
+            // Defer to avoid jank
+            setTimeout(() => ensureSVGInjected(), 50)
+          }
+        }
+      }
+    })
+
+    observerRef.current.observe(wrapper, { childList: true, subtree: false })
+
+    // Also attempt an initial repair in case the SVG was lost earlier
+    ensureSVGInjected().catch(() => {})
+
+    return () => {
+      if (observerRef.current) observerRef.current.disconnect()
+      observerRef.current = null
+    }
+  }, [ensureSVGInjected])
 
   // Helper function to get path length
   const getPathLength = (el: Element): number => {

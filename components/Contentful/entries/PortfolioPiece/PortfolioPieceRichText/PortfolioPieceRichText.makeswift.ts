@@ -17,8 +17,8 @@ runtime.registerComponent(PortfolioPieceRichText, {
       label: 'Field',
       async getOptions(query) {
         return getFieldOptions({
-          type: 'PortfolioPiece',
-          filter: name => /richtext|body/i.test(name),
+          type: 'PortfolioPiece' as any,
+          filter: name => typeof name === 'string' && /richtext|body/i.test(name),
           query,
         })
       },

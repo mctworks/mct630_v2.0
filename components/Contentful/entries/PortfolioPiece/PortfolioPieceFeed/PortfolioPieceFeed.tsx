@@ -149,8 +149,8 @@ export function PortfolioPieceFeed({
     <div className={clsx(className, '@container space-y-12')} data-pieces-count={pieces.length}>
       {active.length > 0 && (
         <section>
-          <h2 className="text-2xl font-semibold mb-4">Active Projects</h2>
-          <div className="grid grid-cols-1 gap-8 @sm:grid-cols-2 @xl:grid-cols-3">
+          <h2 className="text-2xl portfolio-h2 mb-4">Active Projects</h2>
+          <div className="grid grid-cols-1 gap-8 @sm:grid-cols-2 @xl:grid-cols-3 center-single-column">
             {active.slice(0, currentPage * itemsPerPage).map(renderCard)}
           </div>
         </section>
@@ -158,8 +158,8 @@ export function PortfolioPieceFeed({
 
       {past.length > 0 && (
         <section>
-          <h2 className="text-2xl font-semibold mb-4">Past Projects</h2>
-          <div className="grid grid-cols-1 gap-8 @sm:grid-cols-2 @xl:grid-cols-3">
+          <h2 className="text-2xl portfolio-h2mb-4">Past Projects</h2>
+          <div className="grid grid-cols-1 gap-8 @sm:grid-cols-2 @xl:grid-cols-3 center-single-column">
             {past.slice(0, currentPage * itemsPerPage).map(renderCard)}
           </div>
         </section>

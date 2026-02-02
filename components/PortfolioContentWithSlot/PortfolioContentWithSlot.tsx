@@ -50,7 +50,7 @@ export default function PortfolioContentWithSlot({
         <div className={body?.style} style={{ background: '#f7f7f7', height: '200px', marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <span style={{ color: '#888' }}>Project Banner</span>
         </div>
-
+                        animatePaths={'frame, codeslash'}
         <div className={title?.style} style={{ marginBottom: '10px' }}>Project Name</div>
         <div className={description?.style} style={{ marginBottom: '20px' }}>Project description goes here.</div>
 
@@ -107,13 +107,6 @@ export default function PortfolioContentWithSlot({
 
             obs.observe(el, { attributes: true, attributeFilter: ['style', 'hidden', 'aria-hidden'], attributeOldValue: true })
 
-            // Also poll for hidden/style changes quickly so we catch native attribute
-            // toggles that may not show an attribute patch depending on how they're set.
-            // Restore visibility proactively if any code hides the root element.
-            // This is a permanent fix (not dev-only): if `#portfolio-content` is
-            // hidden by inline styles or attributes at runtime, immediately
-            // restore it so the page remains usable. We perform a quick poll and
-            // also call this from the MutationObserver callback.
             let restoredOnce = false
             const restoreVisibility = () => {
               try {
@@ -172,7 +165,7 @@ export default function PortfolioContentWithSlot({
             <a href="#portfolio-content" className="focusable-skip-link">Skip to main content</a>
 
             <div className="breadcrumbs" style={{ marginBottom: '20px' }}>
-              <a href="/">Home</a> &gt; <a href="/portfolio">Portfolio</a> &gt; <span>{piece?.name || 'Project'}</span>
+              <a href="/">MCT630</a> | <a href="/portfolio">Portfolio</a> | <span>{piece?.name || 'Project'}</span>
             </div>
 
             <PortfolioPieceImage fieldPath="banner" className={body?.style} />
@@ -188,7 +181,7 @@ export default function PortfolioContentWithSlot({
             />
 
             <nav className="mx-auto w-full max-w-4xl mt-8 space-y-6" aria-label="Portfolio navigation">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch center-single-column">
                 {/* Left column intentionally left blank to preserve layout and centering */}
                 <div />
 
@@ -201,9 +194,9 @@ export default function PortfolioContentWithSlot({
                     gradientStart={'#6EB1FF'}
                     gradientEnd={'#C94F8A'}
                     splashScale={3}
-                    animatedPathId={'frame, portfolio1, portfolio2'}
+                    animatedPathId={'frame, codeslash'}
                     strokeWidth={6}
-                    transitionDuration={1.2}
+                    transitionDuration={6}
                     containerClassName="flex gap-4 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)] rounded"
                     aria-label="Return to portfolio main page"
                   >
@@ -216,7 +209,7 @@ export default function PortfolioContentWithSlot({
                         gradientDuration={1.5}
                         resetDuration={0.1}
                         logoStrokeWidth={6}
-                        animatePaths={'frame, portfolio1, portfolio2'}
+                        animatePaths={'frame, codeslash'}
                         className="index-return-icon flex-shrink-0 transition-transform duration-300"
                       />
                     </div>
