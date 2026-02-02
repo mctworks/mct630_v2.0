@@ -4,6 +4,11 @@ import { useRouter } from 'next/navigation'
 import { ReactNode, useRef, useCallback, useEffect, HTMLAttributes } from 'react'
 import { gsap } from 'gsap'
 
+const prefersReducedMotion = (): boolean => {
+  if (typeof window === 'undefined') return false
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches
+}
+
 interface TransitionLinkProps extends HTMLAttributes<HTMLDivElement> {
   href?: { href: string; target?: '_self' | '_blank' }
   className?: string
@@ -88,62 +93,79 @@ export function TransitionLink({
   }, [])
 
   const handleActraiserDrop = useCallback((e: React.MouseEvent) => {
-    console.log('TransitionLink: handleActraiserDrop start', { href, rotationSpeed, zoomScale, transitionDuration, fadeOutDuration })
-    if (!href?.href) return
-    e.preventDefault()
+  console.log('TransitionLink: handleActraiserDrop start', { href, rotationSpeed, zoomScale, transitionDuration, fadeOutDuration })
+  if (!href?.href) return
+  e.preventDefault()
 
-    const pageWrap = document.getElementById('page-wrap')
-    if (!pageWrap) {
-      router.push(href.href)
-      return
-    }
+  const pageWrap = document.getElementById('page-wrap')
+  if (!pageWrap) {
+    router.push(href.href)
+    return
+  }
 
-    let xPercent = 50
-    let yPercent = 50
-    try {
-      if (pageWrap) {
-        const rect = pageWrap.getBoundingClientRect()
-        const px = Math.max(0, Math.min(e.clientX - rect.left, rect.width))
-        const py = Math.max(0, Math.min(e.clientY - rect.top, rect.height))
-        xPercent = (px / rect.width) * 100
-        yPercent = (py / rect.height) * 100
-      } else {
-        xPercent = (e.clientX / window.innerWidth) * 100
-        yPercent = (e.clientY / window.innerHeight) * 100
-      }
-    } catch (err) {
-      xPercent = 50
-      yPercent = 50
-    }
-
-    pageWrap.classList.remove('transitioning')
-    void pageWrap.offsetWidth
-
-    pageWrap.style.setProperty('--scale', String(zoomScale))
-    pageWrap.style.setProperty('--rotation', `${rotationSpeed}deg`)
-    pageWrap.style.setProperty('--transition-duration', `${transitionDuration}s`)
-    pageWrap.style.transformOrigin = `${xPercent}% ${yPercent}%`
-
-    pageWrap.classList.add('transitioning')
-
-    const outDuration = typeof fadeOutDuration === 'number' ? fadeOutDuration : transitionDuration
-    const startPath = typeof window !== 'undefined' ? window.location.pathname + window.location.search : ''
-
+  // Check for reduced motion preference
+  if (prefersReducedMotion()) {
+    console.log('TransitionLink: reduced motion enabled - using fade transition')
+    
+    // Apply fade out effect
+    pageWrap.style.transition = `opacity ${fadeOutDuration}s ease`
+    pageWrap.style.opacity = '0'
+    
+    // Navigate after fade completes
     setTimeout(() => {
-      console.log('TransitionLink: navigating after ActraiserDrop', { to: href.href })
       sessionStorage.setItem('needsFadeIn', 'true')
       router.push(href.href)
+    }, fadeOutDuration * 1000)
+    
+    return
+  }
 
-      // Safety fallback: if navigation didn't happen (rare race), try again after 2s
-      setTimeout(() => {
-        const currentPath = typeof window !== 'undefined' ? window.location.pathname + window.location.search : ''
-        if (currentPath === startPath) {
-          console.warn('TransitionLink: fallback router.push after ActraiserDrop - navigation did not occur on first attempt', { to: href.href })
-          router.push(href.href)
-        }
-      }, 2000)
-    }, outDuration * 1000)
-  }, [zoomScale, rotationSpeed, transitionDuration, fadeOutDuration, href, router])
+  let xPercent = 50
+  let yPercent = 50
+  try {
+    if (pageWrap) {
+      const rect = pageWrap.getBoundingClientRect()
+      const px = Math.max(0, Math.min(e.clientX - rect.left, rect.width))
+      const py = Math.max(0, Math.min(e.clientY - rect.top, rect.height))
+      xPercent = (px / rect.width) * 100
+      yPercent = (py / rect.height) * 100
+    } else {
+      xPercent = (e.clientX / window.innerWidth) * 100
+      yPercent = (e.clientY / window.innerHeight) * 100
+    }
+  } catch (err) {
+    xPercent = 50
+    yPercent = 50
+  }
+
+  pageWrap.classList.remove('transitioning')
+  void pageWrap.offsetWidth
+
+  pageWrap.style.setProperty('--scale', String(zoomScale))
+  pageWrap.style.setProperty('--rotation', `${rotationSpeed}deg`)
+  pageWrap.style.setProperty('--transition-duration', `${transitionDuration}s`)
+  pageWrap.style.transformOrigin = `${xPercent}% ${yPercent}%`
+
+  pageWrap.classList.add('transitioning')
+
+  const outDuration = typeof fadeOutDuration === 'number' ? fadeOutDuration : transitionDuration
+  const startPath = typeof window !== 'undefined' ? window.location.pathname + window.location.search : ''
+
+  setTimeout(() => {
+    console.log('TransitionLink: navigating after ActraiserDrop', { to: href.href })
+    sessionStorage.setItem('needsFadeIn', 'true')
+    router.push(href.href)
+
+    // Safety fallback: if navigation didn't happen (rare race), try again after 2s
+    setTimeout(() => {
+      const currentPath = typeof window !== 'undefined' ? window.location.pathname + window.location.search : ''
+      if (currentPath === startPath) {
+        console.warn('TransitionLink: fallback router.push after ActraiserDrop - navigation did not occur on first attempt', { to: href.href })
+        router.push(href.href)
+      }
+    }, 2000)
+  }, outDuration * 1000)
+}, [zoomScale, rotationSpeed, transitionDuration, fadeOutDuration, href, router])
 
   const handleLogoSplash = useCallback((e: React.MouseEvent) => {
     try {
@@ -705,30 +727,40 @@ export function TransitionLink({
         })
       }
     
-      // 4. ZOOM IN to cover screen
-      tl.to(clonedSvg, { 
-        duration: 1.2, 
-        scale: splashScale * 3,
-        ease: "power2.in"
-      }, '+=0.2')
+      // 4. ZOOM IN to cover screen (skip if reduced motion)
+if (prefersReducedMotion()) {
+  // For reduced motion: fade out and navigate
+  tl.to(overlay, {
+    duration: 0.5,
+    opacity: 0,
+    ease: "power2.out"
+  }, '+=0.2')
+} else {
+  // Original zoom animation
+  tl.to(clonedSvg, { 
+    duration: 1.2, 
+    scale: splashScale * 3,
+    ease: "power2.in"
+  }, '+=0.2')
+}
 
-      // 5. Navigate after zoom completes
-      tl.eventCallback('onComplete', () => {
-        sessionStorage.setItem('needsFadeIn', 'true')
-        setTimeout(() => {
-          if (document.body.contains(overlay)) {
-            document.body.removeChild(overlay)
-          }
-        }, 50)
-        
-        if (href?.href) {
-          if (href.target === '_blank') {
-            window.open(href.href, '_blank')
-          } else {
-            router.push(href.href)
-          }
-        }
-      })
+// 5. Navigate after animation completes
+tl.eventCallback('onComplete', () => {
+  sessionStorage.setItem('needsFadeIn', 'true')
+  setTimeout(() => {
+    if (document.body.contains(overlay)) {
+      document.body.removeChild(overlay)
+    }
+  }, 50)
+  
+  if (href?.href) {
+    if (href.target === '_blank') {
+      window.open(href.href, '_blank')
+    } else {
+      router.push(href.href)
+    }
+  }
+})
 
     } catch (error) {
       console.error('LogoSplash animation failed:', error)
