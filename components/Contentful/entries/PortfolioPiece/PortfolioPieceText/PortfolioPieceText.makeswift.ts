@@ -15,7 +15,7 @@ runtime.registerComponent(PortfolioPieceText, {
       label: 'Field',
       async getOptions(query) {
         return getFieldOptions({
-          type: 'PortfolioPiece',
+          type: 'PortfolioPiece' as any,
           filter: name => name === 'String',
           query,
         })
