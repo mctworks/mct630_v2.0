@@ -4,9 +4,10 @@ import { useRouter } from 'next/navigation'
 import { ReactNode, useRef, useCallback, useEffect, HTMLAttributes } from 'react'
 import { gsap } from 'gsap'
 
-const prefersReducedMotion = (): boolean => {
-  if (typeof window === 'undefined') return false
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches
+import { getEffectivePrefersReduced } from '@/lib/reducedMotion'
+
+const shouldUseReducedMotion = (): boolean => {
+  return getEffectivePrefersReduced()
 }
 
 interface TransitionLinkProps extends HTMLAttributes<HTMLDivElement> {
@@ -104,7 +105,7 @@ export function TransitionLink({
   }
 
   // Check for reduced motion preference
-  if (prefersReducedMotion()) {
+  if (shouldUseReducedMotion()) {
     console.log('TransitionLink: reduced motion enabled - using fade transition')
     
     // Apply fade out effect
@@ -728,7 +729,7 @@ export function TransitionLink({
       }
     
       // 4. ZOOM IN to cover screen (skip if reduced motion)
-if (prefersReducedMotion()) {
+if (shouldUseReducedMotion()) {
   // For reduced motion: fade out and navigate
   tl.to(overlay, {
     duration: 0.5,
