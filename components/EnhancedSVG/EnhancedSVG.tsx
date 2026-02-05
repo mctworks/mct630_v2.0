@@ -18,7 +18,6 @@ interface EnhancedSVGProps {
   animatePaths?: string[] | string
 }
 
-// Update the component function signature
 export function EnhancedSVG({
   className,
   svg,
@@ -28,7 +27,7 @@ export function EnhancedSVG({
   gradientStartColor = '#000000',
   gradientEndColor = '#ffffff',
   gradientDuration = 2,
-  resetDuration = 0.3, // DEFAULT VALUE
+  resetDuration = 0.3,
   logoStrokeWidth = 2,
   animatePaths = ['all'],
 }: EnhancedSVGProps) {
@@ -36,7 +35,6 @@ export function EnhancedSVG({
   const [svgContent, setSvgContent] = useState<string | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const animationRef = useRef<gsap.core.Timeline | null>(null)
-  const svgProcessedRef = useRef(false)
 
   const strokeColor = isDark ? darkStrokeColor : lightStrokeColor
 
@@ -53,9 +51,9 @@ export function EnhancedSVG({
     return ['all']
   }, [animatePaths])
 
-  // Enhanced color application function
+  // FIXED: Only apply color to strokes, preserve fills
   const applyColorToSVG = useCallback((svgEl: SVGElement, color: string) => {
-    console.log('Applying color to SVG:', color)
+    console.log('Applying stroke color to SVG:', color)
     
     // Remove any existing filters
     const existingDefs = svgEl.querySelector('defs')
@@ -63,68 +61,54 @@ export function EnhancedSVG({
       existingDefs.remove()
     }
 
-    // Create new filter for coloring
-    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs')
-    const filterId = 'colorize-' + Math.random().toString(36).substr(2, 9)
-    const filter = document.createElementNS('http://www.w3.org/2000/svg', 'filter')
-    filter.id = filterId
-    filter.innerHTML = `
-      <feFlood flood-color="${color}" result="flood"/>
-      <feComposite in="flood" in2="SourceAlpha" operator="in" result="colored"/>
-      <feBlend in="colored" in2="SourceGraphic" mode="multiply"/>
-    `
-    defs.appendChild(filter)
-    svgEl.insertBefore(defs, svgEl.firstChild)
-
-    // Apply to all elements with better detection
+    // Apply to all elements but PRESERVE fills
     const elements = svgEl.querySelectorAll('*')
     elements.forEach(el => {
       if (el.tagName.toLowerCase() === 'defs') return
       
       const tagName = el.tagName.toLowerCase()
-      const originalFill = el.getAttribute('fill')
       const originalStroke = el.getAttribute('stroke')
       const style = el.getAttribute('style') || ''
 
       // Skip if element is currently animated
-      if (el.hasAttribute('data-original-fill') || el.hasAttribute('data-original-stroke')) {
+      if (el.hasAttribute('data-original-stroke')) {
         return
       }
-
-      // Enhanced detection for elements that should be colored
-      const hasVisibleFill = (
-        (originalFill && originalFill !== 'none' && originalFill !== 'transparent') ||
-        (style.includes('fill:') && !style.includes('fill: none') && !style.includes('fill: transparent'))
-      )
 
       const hasVisibleStroke = (
         (originalStroke && originalStroke !== 'none' && originalStroke !== 'transparent') ||
         (style.includes('stroke:') && !style.includes('stroke: none') && !style.includes('stroke: transparent'))
       )
 
-      if (tagName === 'image') {
-        el.setAttribute('filter', `url(#${filterId})`)
-      } else {
-        // Apply color to fills (rectangles, polygons, text, etc.)
-        if (hasVisibleFill) {
-          el.setAttribute('fill', color)
-          // Type-safe style access
-          const svgElement = el as SVGElement
-          svgElement.style.setProperty('fill', color, 'important')
+      // ONLY apply color to strokes - DO NOT touch fills
+      if (hasVisibleStroke) {
+        el.setAttribute('stroke', color)
+        const svgElement = el as SVGElement
+        svgElement.style.setProperty('stroke', color, 'important')
+      }
+      
+      // For image elements, create a filter that only affects strokes
+      if (tagName === 'image' && hasVisibleStroke) {
+        if (!svgEl.querySelector('defs')) {
+          const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs')
+          svgEl.insertBefore(defs, svgEl.firstChild)
         }
         
-        // Apply color to strokes
-        if (hasVisibleStroke) {
-          el.setAttribute('stroke', color)
-          // Type-safe style access
-          const svgElement = el as SVGElement
-          svgElement.style.setProperty('stroke', color, 'important')
-        }
+        const defsEl = svgEl.querySelector('defs')
+        const filterId = 'stroke-colorize-' + Math.random().toString(36).substr(2, 9)
+        const filter = document.createElementNS('http://www.w3.org/2000/svg', 'filter')
+        filter.id = filterId
+        filter.innerHTML = `
+          <feFlood flood-color="${color}" result="flood"/>
+          <feComposite in="flood" in2="SourceAlpha" operator="in" result="colored"/>
+          <feComposite in="colored" in2="SourceGraphic" operator="over"/>
+        `
+        defsEl?.appendChild(filter)
+        el.setAttribute('filter', `url(#${filterId})`)
       }
     })
   }, [])
 
-  // Single effect to handle everything
   useEffect(() => {
     if (!svg?.url || !containerRef.current) return
 
@@ -140,7 +124,6 @@ export function EnhancedSVG({
         const wrapper = containerRef.current?.querySelector('.icon-fill')
         if (!wrapper) return
 
-        // Inject SVG (idempotent)
         if (!wrapper.querySelector('svg')) {
           wrapper.innerHTML = text
         }
@@ -157,20 +140,10 @@ export function EnhancedSVG({
           console.log('🎬 Setting up animation...')
           setTimeout(() => setupAnimation(svgEl), 200)
         }
-        // Mark as processed once we've successfully injected and setup
-        svgProcessedRef.current = true
       })
       .catch(console.error)
   }, [svg?.url, enableGradientDraw, applyColorToSVG, strokeColor])
 
-  /* NOTE: The effect that re-injects the SVG when the wrapper is cleared
-     is intentionally placed AFTER `setupAnimation` is declared below to
-     avoid a Temporal Dead Zone runtime ReferenceError when React renders
-     (trying to reference `setupAnimation` before it is initialized).
-     See earlier change which had this effect above `setupAnimation` and
-     caused `Cannot access 'setupAnimation' before initialization`. */
-
-  // Effect for theme changes
   useEffect(() => {
     if (!containerRef.current || !svgContent) return
     
@@ -181,7 +154,6 @@ export function EnhancedSVG({
     }
   }, [strokeColor, svgContent, applyColorToSVG])
 
-  // Enhanced setupAnimation with text preservation
   const setupAnimation = useCallback((svgEl: SVGElement) => {
     if (!enableGradientDraw || !svgEl) return
     
@@ -201,27 +173,23 @@ export function EnhancedSVG({
       normalizedAnimatePaths.forEach(id => {
         const cleanId = id.replace(/^#/, '').trim()
         if (!cleanId) return
-        // Exact match
         try {
           const exact = svgEl.querySelector(`#${CSS.escape(cleanId)}`)
           if (exact) {
             selected.push(exact)
             return
           }
-        } catch (err) {
-          // ignore
-        }
-        // Ends with match for IDs like foo-path-abc
-        const ends = Array.from(svgEl.querySelectorAll('[id]')).filter(el => el.id.endsWith(`-${cleanId}`) || el.id.endsWith(`_${cleanId}`) || el.id === cleanId)
+        } catch (err) {}
+        const ends = Array.from(svgEl.querySelectorAll('[id]')).filter(el => 
+          el.id.endsWith(`-${cleanId}`) || el.id.endsWith(`_${cleanId}`) || el.id === cleanId
+        )
         if (ends.length > 0) {
           ends.forEach(el => selected.push(el))
           return
         }
-        // Fallback include match
         const includes = Array.from(svgEl.querySelectorAll('[id]')).filter(el => el.id.includes(cleanId))
         if (includes.length > 0) {
           includes.forEach(el => selected.push(el))
-          return
         }
       })
       elementsToAnimate = selected
@@ -240,7 +208,6 @@ export function EnhancedSVG({
       const svgShape = shape as SVGElement
       const tagName = svgShape.tagName.toLowerCase()
       
-      // Store original values
       const originalFill = svgShape.getAttribute('fill') || ''
       const originalStroke = svgShape.getAttribute('stroke') || ''
       const originalStrokeWidth = svgShape.getAttribute('stroke-width') || ''
@@ -253,23 +220,19 @@ export function EnhancedSVG({
         const length = getPathLength(svgShape)
         if (!length || length === 0) return
 
-        // Setup stroke animation
         svgShape.style.strokeDasharray = `${length}`
         svgShape.style.strokeDashoffset = `${length}`
         svgShape.style.strokeWidth = `${logoStrokeWidth}px`
         svgShape.style.stroke = strokeColor
         
-        // PRESERVE FILLS for text and other elements that need it
-        // Only remove fill if it was originally none or empty
+        // CRITICAL: Preserve original fills, only set to 'none' if it was originally none
         if (originalFill === 'none' || !originalFill) {
           svgShape.style.fill = 'none'
         } else {
-          // Keep the original fill for text and other filled elements
           svgShape.style.fill = originalFill
         }
 
-        // Animation sequence:
-        // 1. Draw with gradient start color
+        // Animation sequence
         tl.to(svgShape, {
           strokeDashoffset: 0,
           stroke: gradientStartColor,
@@ -277,20 +240,18 @@ export function EnhancedSVG({
           ease: "power2.out"
         }, i * 0.4)
 
-        // 2. Transition to gradient end color
         tl.to(svgShape, {
           stroke: gradientEndColor,
           duration: gradientDuration * 0.3,
           ease: "power1.inOut"
         }, `+=0.1`)
 
-        // 3. Reset back to theme color with faster reset
-         tl.to(svgShape, {
+        tl.to(svgShape, {
           strokeDashoffset: -length,
           stroke: strokeColor,
-          duration: gradientDuration * resetDuration, // Use the resetDuration prop
+          duration: gradientDuration * resetDuration,
           ease: "power2.in"
-      }, `+=0.2`)
+        }, `+=0.2`)
 
       } catch (error) {
         console.error(`Error animating element ${i}:`, error)
@@ -298,35 +259,25 @@ export function EnhancedSVG({
     })
 
     animationRef.current = tl
-    console.log('✅ Animation timeline created with current theme')
-  }, [enableGradientDraw, gradientStartColor, gradientEndColor, gradientDuration, logoStrokeWidth, normalizedAnimatePaths, strokeColor])
+    console.log('✅ Animation timeline created')
+  }, [enableGradientDraw, gradientStartColor, gradientEndColor, gradientDuration, logoStrokeWidth, normalizedAnimatePaths, strokeColor, resetDuration])
 
-  // Update animation on theme change
   useEffect(() => {
     if (!enableGradientDraw || !containerRef.current || !svgContent) return
     
     const svgEl = containerRef.current.querySelector('svg')
     if (svgEl && animationRef.current) {
       console.log('🎨 Updating animation with new theme color:', strokeColor)
-      
-      // Restart animation with new theme color
-      setTimeout(() => {
-        setupAnimation(svgEl)
-      }, 100)
+      setTimeout(() => setupAnimation(svgEl), 100)
     }
   }, [strokeColor, enableGradientDraw, svgContent, setupAnimation])
 
-  // If the DOM was mutated after initial processing (e.g., some other
-  // script accidentally cleared the `.icon-fill` innerHTML), ensure the
-  // SVG is re-injected and animations are restored. This keeps the
-  // component resilient during client-side navigation or overlays.
   useEffect(() => {
     if (!containerRef.current || !svgContent) return
     const wrapper = containerRef.current.querySelector('.icon-fill')
     if (!wrapper) return
     const existing = wrapper.querySelector('svg')
     if (!existing) {
-      // Re-inject the previously fetched SVG content
       wrapper.innerHTML = svgContent
       const svgEl = wrapper.querySelector('svg')
       if (svgEl) {
@@ -352,14 +303,12 @@ export function EnhancedSVG({
         const originalStroke = svgEl.getAttribute('data-original-stroke')
         const originalStrokeWidth = svgEl.getAttribute('data-original-stroke-width')
         
-        // Restore original styles but respect current theme
         if (originalFill !== null && originalFill !== '') {
           svgEl.style.fill = originalFill
         } else {
           svgEl.style.removeProperty('fill')
         }
         
-        // For stroke, we want to use the current theme color, not the original
         svgEl.style.stroke = strokeColor
         
         if (originalStrokeWidth !== null && originalStrokeWidth !== '') {
@@ -368,20 +317,16 @@ export function EnhancedSVG({
           svgEl.style.removeProperty('stroke-width')
         }
         
-        // Clean up temporary attributes
         svgEl.removeAttribute('data-original-fill')
         svgEl.removeAttribute('data-original-stroke')
         svgEl.removeAttribute('data-original-stroke-width')
         
-        // Remove animation properties
         svgEl.style.removeProperty('stroke-dasharray')
         svgEl.style.removeProperty('stroke-dashoffset')
       })
     }
   }, [strokeColor])
 
-  // Runtime repair: if the injected SVG is removed by other scripts or
-  // navigation artifacts, attempt to re-inject or refetch it automatically.
   const observerRef = useRef<MutationObserver | null>(null)
 
   const ensureSVGInjected = useCallback(async () => {
@@ -390,14 +335,10 @@ export function EnhancedSVG({
       const wrapper = containerRef.current.querySelector('.icon-fill')
       if (!wrapper) return
       const existing = wrapper.querySelector('svg')
-      if (existing) return // already present
+      if (existing) return
 
-      // If we have cached svgContent, re-insert it
       if (svgContent) {
         console.warn('EnhancedSVG: wrapper lost <svg>, re-injecting cached content')
-        // Capture a stack trace to help identify the code path that removed
-        // the injected SVG so we can find the culprit in production.
-        console.trace('EnhancedSVG: stack trace for lost-svg detection')
         wrapper.innerHTML = svgContent
         const svgEl = wrapper.querySelector('svg')
         if (svgEl) {
@@ -407,19 +348,11 @@ export function EnhancedSVG({
         return
       }
 
-      // Otherwise try to fetch again (network failure may have occurred earlier)
       console.warn('EnhancedSVG: wrapper lost <svg> and no cached content, refetching', svg.url)
-      console.trace('EnhancedSVG: stack trace for lost-svg refetch')
       const resp = await fetch(svg.url, { cache: 'no-cache' })
-      if (!resp.ok) {
-        console.error('EnhancedSVG: refetch failed', resp.status)
-        return
-      }
+      if (!resp.ok) return
       const text = await resp.text()
-      if (!text.includes('<svg')) {
-        console.error('EnhancedSVG: refetch returned invalid svg')
-        return
-      }
+      if (!text.includes('<svg')) return
       setSvgContent(text)
       wrapper.innerHTML = text
       const svgEl = wrapper.querySelector('svg')
@@ -437,13 +370,11 @@ export function EnhancedSVG({
     const wrapper = containerRef.current.querySelector('.icon-fill')
     if (!wrapper) return
 
-    // Observe childList changes so we can repair accidental removals
     observerRef.current = new MutationObserver((mutations) => {
       for (const m of mutations) {
         if (m.type === 'childList') {
           const wrapperHasSvg = !!wrapper.querySelector('svg')
           if (!wrapperHasSvg) {
-            // Defer to avoid jank
             setTimeout(() => ensureSVGInjected(), 50)
           }
         }
@@ -451,8 +382,6 @@ export function EnhancedSVG({
     })
 
     observerRef.current.observe(wrapper, { childList: true, subtree: false })
-
-    // Also attempt an initial repair in case the SVG was lost earlier
     ensureSVGInjected().catch(() => {})
 
     return () => {
@@ -461,7 +390,6 @@ export function EnhancedSVG({
     }
   }, [ensureSVGInjected])
 
-  // Helper function to get path length
   const getPathLength = (el: Element): number => {
     try {
       if (el instanceof SVGPathElement) return el.getTotalLength()
@@ -482,7 +410,7 @@ export function EnhancedSVG({
         }
         return len
       }
-      return 100 // Default length for other shapes
+      return 100
     } catch (e) {
       return 100
     }
