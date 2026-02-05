@@ -38,5 +38,3 @@ export function PortfolioPieceImage({ fieldPath, className, ...rest }: Props) {
 
   return <ContentfulImage {...rest} field={field} className={className} />
 }
-
-export * from './PortfolioPieceImage'

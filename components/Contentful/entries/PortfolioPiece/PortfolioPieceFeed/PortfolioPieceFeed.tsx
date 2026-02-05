@@ -174,4 +174,3 @@ export function PortfolioPieceFeed({
   )
 }
 
-export * from './PortfolioPieceFeed'

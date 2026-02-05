@@ -21,4 +21,3 @@ export function PortfolioPieceText({ fieldPath, className, ...rest }: Props) {
   )
 }
 
-export * from './PortfolioPieceText'

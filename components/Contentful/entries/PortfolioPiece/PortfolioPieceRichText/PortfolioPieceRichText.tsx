@@ -49,4 +49,3 @@ export function PortfolioPieceRichText({
   )
 }
 
-export * from './PortfolioPieceRichText'
