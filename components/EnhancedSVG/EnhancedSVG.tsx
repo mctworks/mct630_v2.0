@@ -59,135 +59,88 @@ export function EnhancedSVG({
     return ['all']
   }, [animatePaths])
 
-  // FIXED: Properly recolor SVG with both stroke and fill colors
-  const applyColorToSVG = useCallback((svgEl: SVGElement, stroke: string, fill: string) => {
-    console.log('🎨 Applying colors to SVG - Stroke:', stroke, 'Fill:', fill)
+  // ORIGINAL WORKING CODE - JUST ADDED IMAGE HANDLING
+  const applyColorToSVG = useCallback((svgEl: SVGElement, color: string) => {
+    console.log('Applying stroke color to SVG:', color)
     
-    // Process all elements
+    // Do NOT remove existing <defs> - they may contain gradients, masks, or
+    // other definitions that should be preserved. We'll create defs only when
+    // needed and leave existing content intact.
+
+    // Apply to all elements but PRESERVE fills
     const elements = svgEl.querySelectorAll('*')
     elements.forEach(el => {
       if (el.tagName.toLowerCase() === 'defs') return
       
       const tagName = el.tagName.toLowerCase()
-      
-      // Skip elements that are currently being animated
+      const originalStroke = el.getAttribute('stroke')
+      const originalFill = el.getAttribute('fill')
+      const style = el.getAttribute('style') || ''
+
+      // Skip if element is currently animated (preserve animation-driven colors)
       if (el.hasAttribute('data-original-stroke') || el.hasAttribute('data-original-fill')) {
         return
       }
 
-      // Store original values if not already stored (for theme toggling)
-      if (!el.hasAttribute('data-theme-original-stroke')) {
-        const originalStroke = el.getAttribute('stroke')
-        if (originalStroke) {
-          el.setAttribute('data-theme-original-stroke', originalStroke)
-        }
-      }
-      
-      if (!el.hasAttribute('data-theme-original-fill')) {
-        const originalFill = el.getAttribute('fill')
-        if (originalFill) {
-          el.setAttribute('data-theme-original-fill', originalFill)
-        }
-      }
+      const hasVisibleStroke = (
+        (originalStroke && originalStroke !== 'none' && originalStroke !== 'transparent') ||
+        (style.includes('stroke:') && !style.includes('stroke: none') && !style.includes('stroke: transparent'))
+      )
 
-      // Handle stroke colors
-      const hasStrokeAttr = el.hasAttribute('stroke') && 
-                           el.getAttribute('stroke') !== 'none' && 
-                           el.getAttribute('stroke') !== 'transparent'
-      
-      const hasStrokeStyle = el.getAttribute('style')?.includes('stroke:') && 
-                            !el.getAttribute('style')?.includes('stroke: none') &&
-                            !el.getAttribute('style')?.includes('stroke: transparent')
-      
-      if (hasStrokeAttr || hasStrokeStyle) {
-        el.setAttribute('stroke', stroke)
+      const hasVisibleFill = (
+        (originalFill && originalFill !== 'none' && originalFill !== 'transparent') ||
+        (style.includes('fill:') && !style.includes('fill: none') && !style.includes('fill: transparent'))
+      )
+
+      const isGradientFill = !!(originalFill && originalFill.includes('url(')) || style.includes('fill:url(')
+
+      // Apply color to strokes when present
+      if (hasVisibleStroke) {
+        el.setAttribute('stroke', strokeColor)
         const svgElement = el as SVGElement
-        svgElement.style.setProperty('stroke', stroke, 'important')
+        svgElement.style.setProperty('stroke', strokeColor, 'important')
       }
 
-      // Handle fill colors - ALWAYS recolor fills unless they're gradients or explicitly 'none'
-      const currentFill = el.getAttribute('fill') || ''
-      const styleFill = el.getAttribute('style')?.match(/fill:\s*([^;]+)/)?.[1] || ''
-      
-      // Check if it's a gradient fill - preserve these
-      const isGradientFill = currentFill.includes('url(') || styleFill.includes('url(')
-      
-      // Check if fill is explicitly set to 'none' or 'transparent'
-      const isFillNone = currentFill === 'none' || 
-                         currentFill === 'transparent' || 
-                         styleFill === 'none' || 
-                         styleFill === 'transparent'
-      
-      // Apply fill color to:
-      // 1. Elements with fill attribute (except gradients and 'none')
-      // 2. Elements with fill style (except gradients and 'none')
-      // 3. Text elements (always recolor)
-      // 4. Elements with black/white/currentColor fills
-      if (!isGradientFill && !isFillNone) {
-        // Always recolor if there's any fill attribute or if it's text
-        if (el.hasAttribute('fill') || tagName === 'text' || hasFillStyle(el)) {
-          el.setAttribute('fill', fill)
-          const svgElement = el as SVGElement
-          svgElement.style.setProperty('fill', fill, 'important')
-        }
+      // Apply color to fills for textual or shape elements when appropriate.
+      // Preserve gradient fills (url(#...)) to avoid breaking graphic intent.
+      if ((hasVisibleFill && !isGradientFill) || tagName === 'text') {
+        el.setAttribute('fill', fillColor)
+        const svgElement = el as SVGElement
+        svgElement.style.setProperty('fill', fillColor, 'important')
       }
       
-      // Special handling for common color values
-      const lowerFill = currentFill.toLowerCase()
-      const lowerStyleFill = styleFill.toLowerCase()
-      
-      if (lowerFill === 'black' || lowerFill === '#000000' || 
-          lowerStyleFill === 'black' || lowerStyleFill === '#000000' ||
-          lowerFill === 'white' || lowerFill === '#ffffff' ||
-          lowerStyleFill === 'white' || lowerStyleFill === '#ffffff' ||
-          lowerFill === 'currentcolor' || lowerStyleFill === 'currentcolor') {
-        if (!isGradientFill) {
-          el.setAttribute('fill', fill)
-          const svgElement = el as SVGElement
-          svgElement.style.setProperty('fill', fill, 'important')
+      // ============ NEW: HANDLE <image> ELEMENTS ============
+      if (tagName === 'image') {
+        // Create filter for images
+        if (!svgEl.querySelector('defs')) {
+          const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs')
+          svgEl.insertBefore(defs, svgEl.firstChild)
         }
-      }
-    })
-    
-    // Helper function to check if element has fill style
-    function hasFillStyle(el: Element): boolean {
-      const style = el.getAttribute('style')
-      if (!style) return false
-      return style.includes('fill:') && 
-             !style.includes('fill: none') && 
-             !style.includes('fill: transparent')
-    }
-    
-    console.log('✅ SVG recoloring complete')
-  }, [])
-
-  // Reset SVG to original colors before animation
-  const resetToThemeColors = useCallback((svgEl: SVGElement) => {
-    if (!svgEl) return
-    
-    const elements = svgEl.querySelectorAll('*')
-    elements.forEach(el => {
-      // Restore stroke to theme color if it had a stroke originally
-      if (el.hasAttribute('data-theme-original-stroke')) {
-        const originalStroke = el.getAttribute('data-theme-original-stroke')
-        if (originalStroke && originalStroke !== 'none' && originalStroke !== 'transparent') {
-          el.setAttribute('stroke', strokeColor)
-          const svgEl = el as SVGElement
-          svgEl.style.setProperty('stroke', strokeColor, 'important')
-        }
-      }
-      
-      // Restore fill to theme color if it had a fill originally (and not gradient/none)
-      if (el.hasAttribute('data-theme-original-fill')) {
-        const originalFill = el.getAttribute('data-theme-original-fill')
-        if (originalFill && 
-            originalFill !== 'none' && 
-            originalFill !== 'transparent' && 
-            !originalFill.includes('url(')) {
-          el.setAttribute('fill', fillColor)
-          const svgEl = el as SVGElement
-          svgEl.style.setProperty('fill', fillColor, 'important')
-        }
+        
+        const defsEl = svgEl.querySelector('defs')
+        const filterId = 'stroke-colorize-' + Math.random().toString(36).substr(2, 9)
+        const filter = document.createElementNS('http://www.w3.org/2000/svg', 'filter')
+        filter.id = filterId
+        filter.innerHTML = `
+          <feFlood flood-color="${strokeColor}" result="flood"/>
+          <feComposite in="flood" in2="SourceAlpha" operator="in" result="colored"/>
+          <feComposite in="colored" in2="SourceGraphic" operator="over"/>
+        `
+        defsEl?.appendChild(filter)
+        el.setAttribute('filter', `url(#${filterId})`)
+        
+        // Also recolor any child elements
+        const children = el.querySelectorAll('*')
+        children.forEach(child => {
+          const childStroke = child.getAttribute('stroke')
+          if (childStroke && childStroke !== 'none' && childStroke !== 'transparent') {
+            child.setAttribute('stroke', strokeColor)
+          }
+          const childFill = child.getAttribute('fill')
+          if (childFill && childFill !== 'none' && childFill !== 'transparent' && !childFill.includes('url(')) {
+            child.setAttribute('fill', fillColor)
+          }
+        })
       }
     })
   }, [strokeColor, fillColor])
@@ -215,8 +168,8 @@ export function EnhancedSVG({
         
         console.log('✅ SVG loaded')
         
-        // Apply initial colors
-        applyColorToSVG(svgEl, strokeColor, fillColor)
+        // Apply initial color
+        applyColorToSVG(svgEl, strokeColor)
         
         // Setup animation if enabled
         if (enableGradientDraw) {
@@ -225,43 +178,26 @@ export function EnhancedSVG({
         }
       })
       .catch(console.error)
-  }, [svg?.url, enableGradientDraw, applyColorToSVG, strokeColor, fillColor])
+  }, [svg?.url, enableGradientDraw, applyColorToSVG, strokeColor])
 
   useEffect(() => {
     if (!containerRef.current || !svgContent) return
     
     const svgEl = containerRef.current.querySelector('svg')
     if (svgEl) {
-      console.log('🎨 Theme changed, updating colors...', { strokeColor, fillColor })
-      
-      // If animation is active, stop it and reset
-      if (animationRef.current) {
-        cleanupAnimation(svgEl)
-      }
-      
-      // Apply new theme colors
-      applyColorToSVG(svgEl, strokeColor, fillColor)
-      
-      // Restart animation if enabled
-      if (enableGradientDraw) {
-        setTimeout(() => setupAnimation(svgEl), 100)
-      }
+      console.log('🎨 Theme changed, updating color...', strokeColor)
+      applyColorToSVG(svgEl, strokeColor)
     }
-  }, [strokeColor, fillColor, svgContent, applyColorToSVG, enableGradientDraw])
+  }, [strokeColor, svgContent, applyColorToSVG])
 
   const setupAnimation = useCallback((svgEl: SVGElement) => {
     if (!enableGradientDraw || !svgEl) return
     
     console.log('🎬 Starting animation setup with theme color:', strokeColor)
 
-    // Kill any existing animation
     if (animationRef.current) {
       animationRef.current.kill()
-      animationRef.current = null
     }
-
-    // Reset to theme colors first
-    resetToThemeColors(svgEl)
 
     let elementsToAnimate: Element[] = []
     if (normalizedAnimatePaths.includes('all')) {
@@ -306,8 +242,8 @@ export function EnhancedSVG({
 
     elementsToAnimate.forEach((shape, i) => {
       const svgShape = shape as SVGElement
+      const tagName = svgShape.tagName.toLowerCase()
       
-      // Store original values for cleanup
       const originalFill = svgShape.getAttribute('fill') || ''
       const originalStroke = svgShape.getAttribute('stroke') || ''
       const originalStrokeWidth = svgShape.getAttribute('stroke-width') || ''
@@ -320,17 +256,16 @@ export function EnhancedSVG({
         const length = getPathLength(svgShape)
         if (!length || length === 0) return
 
-        // Set animation properties
         svgShape.style.strokeDasharray = `${length}`
         svgShape.style.strokeDashoffset = `${length}`
         svgShape.style.strokeWidth = `${logoStrokeWidth}px`
         svgShape.style.stroke = strokeColor
         
-        // Preserve original fill behavior during animation
-        if (originalFill === 'none' || !originalFill || originalFill.includes('url(')) {
-          svgShape.style.fill = originalFill
+        // CRITICAL: Preserve original fills, only set to 'none' if it was originally none
+        if (originalFill === 'none' || !originalFill) {
+          svgShape.style.fill = 'none'
         } else {
-          svgShape.style.fill = fillColor
+          svgShape.style.fill = originalFill
         }
 
         // Animation sequence
@@ -361,7 +296,34 @@ export function EnhancedSVG({
 
     animationRef.current = tl
     console.log('✅ Animation timeline created')
-  }, [enableGradientDraw, gradientStartColor, gradientEndColor, gradientDuration, logoStrokeWidth, normalizedAnimatePaths, strokeColor, fillColor, resetDuration, resetToThemeColors])
+  }, [enableGradientDraw, gradientStartColor, gradientEndColor, gradientDuration, logoStrokeWidth, normalizedAnimatePaths, strokeColor, resetDuration])
+
+  useEffect(() => {
+    if (!enableGradientDraw || !containerRef.current || !svgContent) return
+    
+    const svgEl = containerRef.current.querySelector('svg')
+    if (svgEl && animationRef.current) {
+      console.log('🎨 Updating animation with new theme color:', strokeColor)
+      setTimeout(() => setupAnimation(svgEl), 100)
+    }
+  }, [strokeColor, enableGradientDraw, svgContent, setupAnimation])
+
+  useEffect(() => {
+    if (!containerRef.current || !svgContent) return
+    const wrapper = containerRef.current.querySelector('.icon-fill')
+    if (!wrapper) return
+    const existing = wrapper.querySelector('svg')
+    if (!existing) {
+      wrapper.innerHTML = svgContent
+      const svgEl = wrapper.querySelector('svg')
+      if (svgEl) {
+        applyColorToSVG(svgEl, strokeColor)
+        if (enableGradientDraw) {
+          setTimeout(() => setupAnimation(svgEl), 200)
+        }
+      }
+    }
+  }, [svgContent, enableGradientDraw, applyColorToSVG, setupAnimation, strokeColor])
 
   const cleanupAnimation = useCallback((svgEl: SVGElement | null) => {
     if (animationRef.current) {
@@ -373,32 +335,33 @@ export function EnhancedSVG({
       const animatedElements = svgEl.querySelectorAll('[data-original-fill]')
       animatedElements.forEach(el => {
         const svgEl = el as SVGElement
+        const originalFill = svgEl.getAttribute('data-original-fill')
+        const originalStroke = svgEl.getAttribute('data-original-stroke')
+        const originalStrokeWidth = svgEl.getAttribute('data-original-stroke-width')
         
-        // Remove animation styles
-        svgEl.style.removeProperty('stroke-dasharray')
-        svgEl.style.removeProperty('stroke-dashoffset')
-        
-        // Restore to theme colors
-        if (el.hasAttribute('data-theme-original-stroke')) {
-          svgEl.style.stroke = strokeColor
-          svgEl.setAttribute('stroke', strokeColor)
+        if (originalFill !== null && originalFill !== '') {
+          svgEl.style.fill = originalFill
+        } else {
+          svgEl.style.removeProperty('fill')
         }
         
-        if (el.hasAttribute('data-theme-original-fill')) {
-          const originalFill = el.getAttribute('data-theme-original-fill')
-          if (originalFill && !originalFill.includes('url(') && originalFill !== 'none') {
-            svgEl.style.fill = fillColor
-            svgEl.setAttribute('fill', fillColor)
-          }
+        svgEl.style.stroke = strokeColor
+        
+        if (originalStrokeWidth !== null && originalStrokeWidth !== '') {
+          svgEl.style.strokeWidth = originalStrokeWidth
+        } else {
+          svgEl.style.removeProperty('stroke-width')
         }
         
-        // Remove data attributes
         svgEl.removeAttribute('data-original-fill')
         svgEl.removeAttribute('data-original-stroke')
         svgEl.removeAttribute('data-original-stroke-width')
+        
+        svgEl.style.removeProperty('stroke-dasharray')
+        svgEl.style.removeProperty('stroke-dashoffset')
       })
     }
-  }, [strokeColor, fillColor])
+  }, [strokeColor])
 
   const observerRef = useRef<MutationObserver | null>(null)
 
@@ -415,7 +378,7 @@ export function EnhancedSVG({
         wrapper.innerHTML = svgContent
         const svgEl = wrapper.querySelector('svg')
         if (svgEl) {
-          applyColorToSVG(svgEl, strokeColor, fillColor)
+          applyColorToSVG(svgEl, strokeColor)
           if (enableGradientDraw) setTimeout(() => setupAnimation(svgEl), 200)
         }
         return
@@ -430,13 +393,13 @@ export function EnhancedSVG({
       wrapper.innerHTML = text
       const svgEl = wrapper.querySelector('svg')
       if (svgEl) {
-        applyColorToSVG(svgEl, strokeColor, fillColor)
+        applyColorToSVG(svgEl, strokeColor)
         if (enableGradientDraw) setTimeout(() => setupAnimation(svgEl), 200)
       }
     } catch (err) {
       console.error('EnhancedSVG: ensureSVGInjected error', err)
     }
-  }, [svg, svgContent, applyColorToSVG, enableGradientDraw, setupAnimation, strokeColor, fillColor])
+  }, [svg, svgContent, applyColorToSVG, enableGradientDraw, setupAnimation, strokeColor])
 
   useEffect(() => {
     if (!containerRef.current) return
