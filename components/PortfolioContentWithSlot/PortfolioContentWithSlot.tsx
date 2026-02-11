@@ -140,7 +140,7 @@ export default function PortfolioContentWithSlot({
           <span style={{ color: '#888' }}>Project Banner</span>
         </div>
         <div className={title?.style} style={{ marginBottom: '10px' }}>Project Name</div>
-        <div className={description?.style} style={{ marginBottom: '20px' }}>Project description goes here.</div>
+        <div className={description?.style} style={{ marginBottom: '20px', fontStyle: 'italic' }}>Project description goes here.</div>
 
         <div className={body?.style} style={{ lineHeight: 1.8 }}>
           <p>Rich text content will appear here on the live site.</p>

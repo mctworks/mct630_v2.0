@@ -108,7 +108,7 @@ export function PortfolioPieceFeed({
         <div className="flex flex-1 flex-col p-6">
           <div className="flex-1 space-y-3">
             <h3 className={clsx(titleClassName, 'line-clamp-2', 'font-semibold')}>{piece?.name}</h3>
-            <p className={clsx(descriptionClassName, 'line-clamp-3', 'text-sm', 'text-gray-600')}>{piece?.description}</p>
+            <p className={clsx(descriptionClassName, 'line-clamp-3', 'text-sm', 'text-gray-600',)}>{piece?.description}</p>
           </div>
         </div>
       </>

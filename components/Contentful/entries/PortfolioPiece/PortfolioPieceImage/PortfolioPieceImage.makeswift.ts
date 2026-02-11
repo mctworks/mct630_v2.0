@@ -7,14 +7,14 @@ import { PortfolioPieceImage } from './PortfolioPieceImage'
 runtime.registerComponent(PortfolioPieceImage, {
   type: 'portfolio-piece-image',
   label: 'Contentful/Portfolio/Project Image',
-  props: {
+    props: {
     ...props,
     className: Style(),
     fieldPath: Combobox({
       label: 'Field',
       async getOptions(query) {
         return getFieldOptions({
-          type: 'PortfolioPiece',
+          type: 'PortfolioPiece' as any,
           filter: name => name === 'Asset',
           query,
         })
