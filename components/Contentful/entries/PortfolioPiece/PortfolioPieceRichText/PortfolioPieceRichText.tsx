@@ -15,6 +15,7 @@ type BaseProps = {
   h4ClassName?: string
   h5ClassName?: string
   h6ClassName?: string
+  descriptionClassName?: string
 }
 
 type Props = BaseProps & Omit<ComponentPropsWithoutRef<typeof ContentfulRichText>, 'field'>
@@ -29,6 +30,7 @@ export function PortfolioPieceRichText({
   h4ClassName,
   h5ClassName,
   h6ClassName,
+  descriptionClassName,
   ...rest 
 }: Props) {
   const field = useEntryField({ fieldPath })
@@ -44,6 +46,7 @@ export function PortfolioPieceRichText({
       h4ClassName={h4ClassName}
       h5ClassName={h5ClassName}
       h6ClassName={h6ClassName}
+      descriptionClassName={descriptionClassName}
       field={field} 
     />
   )

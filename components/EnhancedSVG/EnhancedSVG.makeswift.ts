@@ -1,3 +1,4 @@
+// EnhancedSVG.makeswift.ts
 import { runtime } from '@/lib/makeswift/runtime'
 import { 
   Style, 
@@ -24,6 +25,14 @@ runtime.registerComponent(EnhancedSVG, {
     }),
     darkStrokeColor: Color({
       label: 'Dark Theme Stroke',
+      defaultValue: '#ffffff',
+    }),
+    lightFillColor: Color({
+      label: 'Light Theme Fill',
+      defaultValue: '#000000',
+    }),
+    darkFillColor: Color({
+      label: 'Dark Theme Fill',
       defaultValue: '#ffffff',
     }),
     enableGradientDraw: Checkbox({
