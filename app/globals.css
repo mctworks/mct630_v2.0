@@ -747,34 +747,14 @@ html, body {
     justify-content: center;
   }
 }
-
-/* Make the Return-to-Portfolio enhanced SVG visible on light/dark backgrounds
-   without changing the shared `EnhancedSVG` implementation. Use currentColor so
-   the icon follows surrounding text color. */
-.index-return-icon {
-  /* Keep the icon in sync with text color by default */
-  color: var(--color-primary);
-}
-
-/* Prefer the currentColor for strokes but do NOT use !important so
-   animation scripts (GSAP) can modify stroke/fill at runtime. Also,
-   avoid applying fills to elements that are part of animations by
-   excluding elements with the `data-original-fill` marker that the
-   animation setup uses. This preserves animated behavior (e.g. codeslash).
-*/
-.index-return-icon svg {
-  stroke: currentColor;
-}
-
-/* Apply a subtle fill only to elements that are NOT participating in
-   the EnhancedSVG animation (i.e. don't have `data-original-fill`). */
-.index-return-icon svg path:not([data-original-fill]),
-.index-return-icon svg rect:not([data-original-fill]),
-.index-return-icon svg circle:not([data-original-fill]),
-.index-return-icon svg polygon:not([data-original-fill]),
-.index-return-icon svg ellipse:not([data-original-fill]),
-.index-return-icon svg text:not([data-original-fill]) {
-  fill: currentColor;
-  fill-opacity: 0.12;
-}
  
+/* NavMenuPlus - header icon box spacing adjustment */
+div#header-icons {
+    margin-right: 80vw;
+}
+
+@media screen and (max-width: 425px) {
+  div#header-icons {
+    margin-right: 42vw;
+}
+}

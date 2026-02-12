@@ -103,11 +103,26 @@ export function EnhancedSVG({
 
       // Apply color to fills for textual or shape elements when appropriate.
       // Preserve gradient fills (url(#...)) to avoid breaking graphic intent.
-      if ((hasVisibleFill && !isGradientFill) || tagName === 'text') {
-        el.setAttribute('fill', fillColor)
-        const svgElement = el as SVGElement
-        svgElement.style.setProperty('fill', fillColor, 'important')
-      }
+      if (tagName === 'text') {
+  el.setAttribute('fill', fillColor)
+  const svgElement = el as SVGElement
+  svgElement.style.setProperty('fill', fillColor, 'important')
+}
+else if (hasVisibleFill && !isGradientFill) {
+  const currentFill = el.getAttribute('fill')
+  const styleFill = el.getAttribute('style')?.match(/fill:\s*([^;]+)/)?.[1]
+  
+  // Only apply if it's actually a color value
+  if (currentFill && currentFill !== 'none' && currentFill !== 'transparent') {
+    el.setAttribute('fill', fillColor)
+    const svgElement = el as SVGElement
+    svgElement.style.setProperty('fill', fillColor, 'important')
+  }
+  else if (styleFill && styleFill !== 'none' && styleFill !== 'transparent') {
+    const svgElement = el as SVGElement
+    svgElement.style.setProperty('fill', fillColor, 'important')
+  }
+}
       
       // ============ NEW: HANDLE <image> ELEMENTS ============
       if (tagName === 'image') {

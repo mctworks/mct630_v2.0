@@ -1,4 +1,3 @@
-// BlogContentWithSlot.tsx
 'use client'
 
 import React from 'react'
@@ -27,6 +26,33 @@ interface Props {
   h4?: { style?: string } 
   h5?: { style?: string }
   h6?: { style?: string }
+  // MAKESWIFT CONTROLS PROPS
+  paginationIcon?: {
+    lightStrokeColor?: string
+    darkStrokeColor?: string
+    lightFillColor?: string
+    darkFillColor?: string
+    enableGradientDraw?: boolean
+    gradientStartColor?: string
+    gradientEndColor?: string
+    gradientDuration?: number
+    resetDuration?: number
+    logoStrokeWidth?: number
+    animatePaths?: string
+  }
+  returnIcon?: {
+    lightStrokeColor?: string
+    darkStrokeColor?: string
+    lightFillColor?: string
+    darkFillColor?: string
+    enableGradientDraw?: boolean
+    gradientStartColor?: string
+    gradientEndColor?: string
+    gradientDuration?: number
+    resetDuration?: number
+    logoStrokeWidth?: number
+    animatePaths?: string
+  }
   children: React.ReactNode
 }
 
@@ -43,6 +69,8 @@ export default function BlogContentWithSlot({
   h4,
   h5,
   h6,
+  paginationIcon,
+  returnIcon,
   children 
 }: Props) {
   const isEditor = typeof window !== 'undefined' && 
@@ -128,35 +156,38 @@ export default function BlogContentWithSlot({
           isNewest: false,
         })
 
-        type IconCfg = {
-          iconEnableGradientDraw: boolean
-          iconGradientStartColor: string
-          iconGradientEndColor: string
-          iconGradientDuration: number
-          iconResetDuration: number
-          iconLogoStrokeWidth: number
-          iconAnimatePaths: string
+        // DEFAULTS
+        const defaultPaginationConfig = {
+          lightStrokeColor: '#000000',
+          darkStrokeColor: '#ffffff',
+          lightFillColor: '#000000',
+          darkFillColor: '#ffffff',
+          enableGradientDraw: true,
+          gradientStartColor: '#6EB1FF',
+          gradientEndColor: '#C94F8A',
+          gradientDuration: 10,
+          resetDuration: 0.1,
+          logoStrokeWidth: 6,
+          animatePaths: 'arrow',
         }
 
-        const [paginationIconCfg, setPaginationIconCfg] = useState<IconCfg>({
-          iconEnableGradientDraw: true,
-          iconGradientStartColor: '#6EB1FF',
-          iconGradientEndColor: '#C94F8A',
-          iconGradientDuration: 10,
-          iconResetDuration: 0.1,
-          iconLogoStrokeWidth: 6,
-          iconAnimatePaths: 'arrow',
-        })
+        const defaultReturnConfig = {
+          lightStrokeColor: '#000000',
+          darkStrokeColor: '#ffffff',
+          lightFillColor: '#000000',
+          darkFillColor: '#ffffff',
+          enableGradientDraw: true,
+          gradientStartColor: '#6EB1FF',
+          gradientEndColor: '#C94F8A',
+          gradientDuration: 1.5,
+          resetDuration: 0.1,
+          logoStrokeWidth: 6,
+          animatePaths: 'frame, blog1, blog2, blog3, frame',
+        }
 
-        const [returnIconCfg, setReturnIconCfg] = useState<IconCfg>({
-          iconEnableGradientDraw: true,
-          iconGradientStartColor: '#6EB1FF',
-          iconGradientEndColor: '#C94F8A',
-          iconGradientDuration: 1.5,
-          iconResetDuration: 0.1,
-          iconLogoStrokeWidth: 6,
-          iconAnimatePaths: 'frame, blog1, blog2, blog3, frame',
-        })
+        // Load from localStorage
+        const [paginationConfig, setPaginationConfig] = useState(defaultPaginationConfig)
+        const [returnConfig, setReturnConfig] = useState(defaultReturnConfig)
 
         useEffect(() => {
           if (typeof window === 'undefined') return
@@ -166,44 +197,34 @@ export default function BlogContentWithSlot({
             const parsed = JSON.parse(raw)
 
             if (parsed && typeof parsed === 'object') {
-              if (parsed.pagination && parsed.return) {
-                setPaginationIconCfg({
-                  iconEnableGradientDraw: parsed.pagination.iconEnableGradientDraw ?? paginationIconCfg.iconEnableGradientDraw,
-                  iconGradientStartColor: parsed.pagination.iconGradientStartColor ?? paginationIconCfg.iconGradientStartColor,
-                  iconGradientEndColor: parsed.pagination.iconGradientEndColor ?? paginationIconCfg.iconGradientEndColor,
-                  iconGradientDuration: parsed.pagination.iconGradientDuration ?? paginationIconCfg.iconGradientDuration,
-                  iconResetDuration: parsed.pagination.iconResetDuration ?? paginationIconCfg.iconResetDuration,
-                  iconLogoStrokeWidth: parsed.pagination.iconLogoStrokeWidth ?? paginationIconCfg.iconLogoStrokeWidth,
-                  iconAnimatePaths: parsed.pagination.iconAnimatePaths ?? paginationIconCfg.iconAnimatePaths,
+              if (parsed.pagination) {
+                setPaginationConfig({
+                  lightStrokeColor: parsed.pagination.lightStrokeColor ?? defaultPaginationConfig.lightStrokeColor,
+                  darkStrokeColor: parsed.pagination.darkStrokeColor ?? defaultPaginationConfig.darkStrokeColor,
+                  lightFillColor: parsed.pagination.lightFillColor ?? defaultPaginationConfig.lightFillColor,
+                  darkFillColor: parsed.pagination.darkFillColor ?? defaultPaginationConfig.darkFillColor,
+                  enableGradientDraw: parsed.pagination.enableGradientDraw ?? defaultPaginationConfig.enableGradientDraw,
+                  gradientStartColor: parsed.pagination.gradientStartColor ?? defaultPaginationConfig.gradientStartColor,
+                  gradientEndColor: parsed.pagination.gradientEndColor ?? defaultPaginationConfig.gradientEndColor,
+                  gradientDuration: parsed.pagination.gradientDuration ?? defaultPaginationConfig.gradientDuration,
+                  resetDuration: parsed.pagination.resetDuration ?? defaultPaginationConfig.resetDuration,
+                  logoStrokeWidth: parsed.pagination.logoStrokeWidth ?? defaultPaginationConfig.logoStrokeWidth,
+                  animatePaths: parsed.pagination.animatePaths ?? defaultPaginationConfig.animatePaths,
                 })
-                setReturnIconCfg({
-                  iconEnableGradientDraw: parsed.return.iconEnableGradientDraw ?? returnIconCfg.iconEnableGradientDraw,
-                  iconGradientStartColor: parsed.return.iconGradientStartColor ?? returnIconCfg.iconGradientStartColor,
-                  iconGradientEndColor: parsed.return.iconGradientEndColor ?? returnIconCfg.iconGradientEndColor,
-                  iconGradientDuration: parsed.return.iconGradientDuration ?? returnIconCfg.iconGradientDuration,
-                  iconResetDuration: parsed.return.iconResetDuration ?? returnIconCfg.iconResetDuration,
-                  iconLogoStrokeWidth: parsed.return.iconLogoStrokeWidth ?? returnIconCfg.iconLogoStrokeWidth,
-                  iconAnimatePaths: parsed.return.iconAnimatePaths ?? returnIconCfg.iconAnimatePaths,
-                })
-              } else {
-                // old single config structure — apply to both groups for compatibility
-                setPaginationIconCfg({
-                  iconEnableGradientDraw: parsed.iconEnableGradientDraw ?? paginationIconCfg.iconEnableGradientDraw,
-                  iconGradientStartColor: parsed.iconGradientStartColor ?? paginationIconCfg.iconGradientStartColor,
-                  iconGradientEndColor: parsed.iconGradientEndColor ?? paginationIconCfg.iconGradientEndColor,
-                  iconGradientDuration: parsed.iconGradientDuration ?? paginationIconCfg.iconGradientDuration,
-                  iconResetDuration: parsed.iconResetDuration ?? paginationIconCfg.iconResetDuration,
-                  iconLogoStrokeWidth: parsed.iconLogoStrokeWidth ?? paginationIconCfg.iconLogoStrokeWidth,
-                  iconAnimatePaths: parsed.iconAnimatePaths ?? paginationIconCfg.iconAnimatePaths,
-                })
-                setReturnIconCfg({
-                  iconEnableGradientDraw: parsed.iconEnableGradientDraw ?? returnIconCfg.iconEnableGradientDraw,
-                  iconGradientStartColor: parsed.iconGradientStartColor ?? returnIconCfg.iconGradientStartColor,
-                  iconGradientEndColor: parsed.iconGradientEndColor ?? returnIconCfg.iconGradientEndColor,
-                  iconGradientDuration: parsed.iconGradientDuration ?? returnIconCfg.iconGradientDuration,
-                  iconResetDuration: parsed.iconResetDuration ?? returnIconCfg.iconResetDuration,
-                  iconLogoStrokeWidth: parsed.iconLogoStrokeWidth ?? returnIconCfg.iconLogoStrokeWidth,
-                  iconAnimatePaths: parsed.iconAnimatePaths ?? returnIconCfg.iconAnimatePaths,
+              }
+              if (parsed.return) {
+                setReturnConfig({
+                  lightStrokeColor: parsed.return.lightStrokeColor ?? defaultReturnConfig.lightStrokeColor,
+                  darkStrokeColor: parsed.return.darkStrokeColor ?? defaultReturnConfig.darkStrokeColor,
+                  lightFillColor: parsed.return.lightFillColor ?? defaultReturnConfig.lightFillColor,
+                  darkFillColor: parsed.return.darkFillColor ?? defaultReturnConfig.darkFillColor,
+                  enableGradientDraw: parsed.return.enableGradientDraw ?? defaultReturnConfig.enableGradientDraw,
+                  gradientStartColor: parsed.return.gradientStartColor ?? defaultReturnConfig.gradientStartColor,
+                  gradientEndColor: parsed.return.gradientEndColor ?? defaultReturnConfig.gradientEndColor,
+                  gradientDuration: parsed.return.gradientDuration ?? defaultReturnConfig.gradientDuration,
+                  resetDuration: parsed.return.resetDuration ?? defaultReturnConfig.resetDuration,
+                  logoStrokeWidth: parsed.return.logoStrokeWidth ?? defaultReturnConfig.logoStrokeWidth,
+                  animatePaths: parsed.return.animatePaths ?? defaultReturnConfig.animatePaths,
                 })
               }
             }
@@ -211,6 +232,17 @@ export default function BlogContentWithSlot({
             // ignore
           }
         }, [])
+
+        // MERGE: Makeswift props take priority over localStorage
+        const mergedPaginationConfig = {
+          ...paginationConfig,
+          ...(paginationIcon || {}),
+        }
+
+        const mergedReturnConfig = {
+          ...returnConfig,
+          ...(returnIcon || {}),
+        }
 
         useEffect(() => {
           ;(async () => {
@@ -296,24 +328,28 @@ export default function BlogContentWithSlot({
                       href={{ href: pagination.prev.href ?? '#' }}
                       animationType="LogoSplash"
                       splashImage="/icons/MCT630_blog_icon.v.1.0.svg"
-                      gradientStart={paginationIconCfg.iconGradientStartColor}
-                      gradientEnd={paginationIconCfg.iconGradientEndColor}
+                      gradientStart={mergedPaginationConfig.gradientStartColor}
+                      gradientEnd={mergedPaginationConfig.gradientEndColor}
                       splashScale={3}
                       animatedPathId="frame, blog1, blog2, blog3"
-                      strokeWidth={paginationIconCfg.iconLogoStrokeWidth}
+                      strokeWidth={mergedPaginationConfig.logoStrokeWidth}
                       transitionDuration={1.2}
                       containerClassName="flex gap-3 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)] rounded"
                       aria-label={`Previous blog: ${pagination.prev.title}`}
                     >
                       <EnhancedSVG
                         svg={{ url: '/icons/mct630-blog-previous.svg' }}
-                        enableGradientDraw={paginationIconCfg.iconEnableGradientDraw}
-                        gradientStartColor={paginationIconCfg.iconGradientStartColor}
-                        gradientEndColor={paginationIconCfg.iconGradientEndColor}
-                        gradientDuration={paginationIconCfg.iconGradientDuration}
-                        resetDuration={paginationIconCfg.iconResetDuration}
-                        logoStrokeWidth={paginationIconCfg.iconLogoStrokeWidth}
-                        animatePaths={paginationIconCfg.iconAnimatePaths}
+                        lightStrokeColor={mergedPaginationConfig.lightStrokeColor}
+                        darkStrokeColor={mergedPaginationConfig.darkStrokeColor}
+                        lightFillColor={mergedPaginationConfig.lightFillColor}
+                        darkFillColor={mergedPaginationConfig.darkFillColor}
+                        enableGradientDraw={mergedPaginationConfig.enableGradientDraw}
+                        gradientStartColor={mergedPaginationConfig.gradientStartColor}
+                        gradientEndColor={mergedPaginationConfig.gradientEndColor}
+                        gradientDuration={mergedPaginationConfig.gradientDuration}
+                        resetDuration={mergedPaginationConfig.resetDuration}
+                        logoStrokeWidth={mergedPaginationConfig.logoStrokeWidth}
+                        animatePaths={mergedPaginationConfig.animatePaths}
                         className="pagination-arrow transition-transform duration-300"
                       />
                       <div>
@@ -334,25 +370,28 @@ export default function BlogContentWithSlot({
                       href={{ href: pagination.next.href ?? '#' }}
                       animationType="LogoSplash"
                       splashImage="/icons/MCT630_blog_icon.v.1.0.svg"
-                      gradientStart={paginationIconCfg.iconGradientStartColor}
-                      gradientEnd={paginationIconCfg.iconGradientEndColor}
+                      gradientStart={mergedPaginationConfig.gradientStartColor}
+                      gradientEnd={mergedPaginationConfig.gradientEndColor}
                       splashScale={3}
                       animatedPathId="frame, blog1, blog2, blog3"
-                      strokeWidth={paginationIconCfg.iconLogoStrokeWidth}
+                      strokeWidth={mergedPaginationConfig.logoStrokeWidth}
                       transitionDuration={1.2}
                       containerClassName="flex gap-3 justify-end md:justify-end focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)] rounded"
                       aria-label={`Next blog: ${pagination.next.title}`}
                     >
-                      
                       <EnhancedSVG
                         svg={{ url: '/icons/mct630-blog-next.svg' }}
-                        enableGradientDraw={paginationIconCfg.iconEnableGradientDraw}
-                        gradientStartColor={paginationIconCfg.iconGradientStartColor}
-                        gradientEndColor={paginationIconCfg.iconGradientEndColor}
-                        gradientDuration={paginationIconCfg.iconGradientDuration}
-                        resetDuration={paginationIconCfg.iconResetDuration}
-                        logoStrokeWidth={paginationIconCfg.iconLogoStrokeWidth}
-                        animatePaths={paginationIconCfg.iconAnimatePaths}
+                        lightStrokeColor={mergedPaginationConfig.lightStrokeColor}
+                        darkStrokeColor={mergedPaginationConfig.darkStrokeColor}
+                        lightFillColor={mergedPaginationConfig.lightFillColor}
+                        darkFillColor={mergedPaginationConfig.darkFillColor}
+                        enableGradientDraw={mergedPaginationConfig.enableGradientDraw}
+                        gradientStartColor={mergedPaginationConfig.gradientStartColor}
+                        gradientEndColor={mergedPaginationConfig.gradientEndColor}
+                        gradientDuration={mergedPaginationConfig.gradientDuration}
+                        resetDuration={mergedPaginationConfig.resetDuration}
+                        logoStrokeWidth={mergedPaginationConfig.logoStrokeWidth}
+                        animatePaths={mergedPaginationConfig.animatePaths}
                         className="pagination-arrow transition-transform duration-300 right-arrow"
                       />
                       <div className="text-right">
@@ -405,11 +444,11 @@ export default function BlogContentWithSlot({
                     href={{ href: '/blog' }}
                     animationType="LogoSplash"
                     splashImage="/icons/MCT630_blog_icon.v.1.0.svg"
-                    gradientStart={returnIconCfg.iconGradientStartColor}
-                    gradientEnd={returnIconCfg.iconGradientEndColor}
+                    gradientStart={mergedReturnConfig.gradientStartColor}
+                    gradientEnd={mergedReturnConfig.gradientEndColor}
                     splashScale={3}
-                    animatedPathId="frame, blog1, blog2, blog3"
-                    strokeWidth={returnIconCfg.iconLogoStrokeWidth}
+                    animatedPathId={mergedReturnConfig.animatePaths}
+                    strokeWidth={mergedReturnConfig.logoStrokeWidth}
                     transitionDuration={1.2}
                     containerClassName="flex gap-4 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)] rounded"
                     aria-label="Return to blog main page"
@@ -417,14 +456,18 @@ export default function BlogContentWithSlot({
                     <div>
                       <EnhancedSVG
                         svg={{ url: '/icons/MCT630_blog_icon.v.1.0.svg' }}
-                        enableGradientDraw={returnIconCfg.iconEnableGradientDraw}
-                        gradientStartColor={returnIconCfg.iconGradientStartColor}
-                        gradientEndColor={returnIconCfg.iconGradientEndColor}
-                        gradientDuration={returnIconCfg.iconGradientDuration}
-                        resetDuration={returnIconCfg.iconResetDuration}
-                        logoStrokeWidth={returnIconCfg.iconLogoStrokeWidth}
-                        animatePaths={returnIconCfg.iconAnimatePaths}
-                        className="index-return-icon flex-shrink-0 transition-transform duration-300"
+                        lightStrokeColor={mergedReturnConfig.lightStrokeColor}
+                        darkStrokeColor={mergedReturnConfig.darkStrokeColor}
+                        lightFillColor={mergedReturnConfig.lightFillColor}
+                        darkFillColor={mergedReturnConfig.darkFillColor}
+                        enableGradientDraw={mergedReturnConfig.enableGradientDraw}
+                        gradientStartColor={mergedReturnConfig.gradientStartColor}
+                        gradientEndColor={mergedReturnConfig.gradientEndColor}
+                        gradientDuration={mergedReturnConfig.gradientDuration}
+                        resetDuration={mergedReturnConfig.resetDuration}
+                        logoStrokeWidth={mergedReturnConfig.logoStrokeWidth}
+                        animatePaths={mergedReturnConfig.animatePaths}
+                        className="flex-shrink-0 transition-transform duration-300"
                       />
                     </div>
                     <div>
@@ -447,9 +490,9 @@ export default function BlogContentWithSlot({
   })
 
   if (typeof document !== 'undefined') {
-  const makeswiftStyles = document.querySelectorAll('style[data-makeswift]')
-  console.log('Makeswift styles found:', makeswiftStyles.length)
-}
+    const makeswiftStyles = document.querySelectorAll('style[data-makeswift]')
+    console.log('Makeswift styles found:', makeswiftStyles.length)
+  }
   
   return (
     <React.Suspense fallback={<div className={className}>Loading blog...</div>}>

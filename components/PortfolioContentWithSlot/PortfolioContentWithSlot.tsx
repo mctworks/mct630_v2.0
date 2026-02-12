@@ -1,6 +1,6 @@
 'use client'
 
-import React, { Suspense } from 'react'
+import React, { Suspense, useEffect, useState } from 'react'
 import Image from 'next/image'
 import EnhancedSVG from '@/components/EnhancedSVG/EnhancedSVG'
 import TransitionLink from '@/components/TransitionLink/TransitionLink'
@@ -8,7 +8,6 @@ import { PortfolioPieceImage } from '@/components/Contentful/entries/PortfolioPi
 import { PortfolioPieceRichText } from '@/components/Contentful/entries/PortfolioPiece/PortfolioPieceRichText'
 import { PortfolioPieceText } from '@/components/Contentful/entries/PortfolioPiece/PortfolioPieceText'
 import { SectionLayout } from '@/vibes/soul/sections/section-layout'
-import { useEffect } from 'react'
 import { useContentfulData } from '@/lib/contentful/provider'
 import { QueriedPortfolioPiece } from '@/lib/contentful/fetchers'
 
@@ -20,11 +19,88 @@ interface Props {
   h1?: { style?: string }
   h2?: { style?: string }
   h3?: { style?: string }
+  // ALL ENHANCEDSVG PROPS - COLOR + ANIMATION
+  returnIcon?: {
+    lightStrokeColor?: string
+    darkStrokeColor?: string
+    lightFillColor?: string
+    darkFillColor?: string
+    enableGradientDraw?: boolean
+    gradientStartColor?: string
+    gradientEndColor?: string
+    gradientDuration?: number
+    resetDuration?: number
+    logoStrokeWidth?: number
+    animatePaths?: string
+  }
   children?: React.ReactNode
 }
 
-function LivePortfolioContent({ className, title, description, body, h1, h2, h3, children }: Props) {
+function LivePortfolioContent({ 
+  className, 
+  title, 
+  description, 
+  body, 
+  h1, 
+  h2, 
+  h3,
+  returnIcon,
+  children 
+}: Props) {
   const { data: pieces } = useContentfulData()
+
+  // Create local state for icon config with defaults
+  const [iconConfig, setIconConfig] = useState({
+    // COLOR PROPS
+    lightStrokeColor: '#000000',
+    darkStrokeColor: '#ffffff',
+    lightFillColor: '#000000',
+    darkFillColor: '#ffffff',
+    // ANIMATION PROPS
+    enableGradientDraw: true,
+    gradientStartColor: '#6EB1FF',
+    gradientEndColor: '#C94F8A',
+    gradientDuration: 1.5,
+    resetDuration: 0.1,
+    logoStrokeWidth: 6,
+    animatePaths: 'frame, codeslash',
+  })
+
+  // Load config from localStorage
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      const raw = localStorage.getItem('portfolioTransitionsIconConfig')
+      if (!raw) return
+      const parsed = JSON.parse(raw)
+
+      if (parsed && typeof parsed === 'object') {
+        setIconConfig({
+          // COLOR PROPS
+          lightStrokeColor: parsed.lightStrokeColor ?? iconConfig.lightStrokeColor,
+          darkStrokeColor: parsed.darkStrokeColor ?? iconConfig.darkStrokeColor,
+          lightFillColor: parsed.lightFillColor ?? iconConfig.lightFillColor,
+          darkFillColor: parsed.darkFillColor ?? iconConfig.darkFillColor,
+          // ANIMATION PROPS
+          enableGradientDraw: parsed.enableGradientDraw ?? iconConfig.enableGradientDraw,
+          gradientStartColor: parsed.gradientStartColor ?? iconConfig.gradientStartColor,
+          gradientEndColor: parsed.gradientEndColor ?? iconConfig.gradientEndColor,
+          gradientDuration: parsed.gradientDuration ?? iconConfig.gradientDuration,
+          resetDuration: parsed.resetDuration ?? iconConfig.resetDuration,
+          logoStrokeWidth: parsed.logoStrokeWidth ?? iconConfig.logoStrokeWidth,
+          animatePaths: parsed.animatePaths ?? iconConfig.animatePaths,
+        })
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, [])
+
+  // Merge props from Makeswift with localStorage config
+  const mergedConfig = {
+    ...iconConfig,
+    ...(returnIcon || {}),
+  }
 
   console.log('🔍 LivePortfolioContent render:', {
     piecesCount: pieces?.length,
@@ -76,26 +152,32 @@ function LivePortfolioContent({ className, title, description, body, h1, h2, h3,
               href={{ href: '/portfolio' }}
               animationType="LogoSplash"
               splashImage="/icons/MCT630_portfolio_icon.v.1.0.svg"
-              gradientStart={'#6EB1FF'}
-              gradientEnd={'#C94F8A'}
+              gradientStart={mergedConfig.gradientStartColor}
+              gradientEnd={mergedConfig.gradientEndColor}
               splashScale={3}
-              animatedPathId={'frame, codeslash'}
-              strokeWidth={6}
-              transitionDuration={6}
+              animatedPathId={mergedConfig.animatePaths}
+              strokeWidth={mergedConfig.logoStrokeWidth}
+              transitionDuration={mergedConfig.gradientDuration}
               containerClassName="flex gap-4 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)] rounded"
               aria-label="Return to portfolio main page"
             >
               <div>
                 <EnhancedSVG
                   svg={{ url: '/icons/MCT630_portfolio_icon.v.1.0.svg' }}
-                  enableGradientDraw={true}
-                  gradientStartColor={'#6EB1FF'}
-                  gradientEndColor={'#C94F8A'}
-                  gradientDuration={1.5}
-                  resetDuration={0.1}
-                  logoStrokeWidth={6}
-                  animatePaths={'frame, codeslash'}
-                  className="index-return-icon flex-shrink-0 transition-transform duration-300"
+                  // COLOR PROPS
+                  lightStrokeColor={mergedConfig.lightStrokeColor}
+                  darkStrokeColor={mergedConfig.darkStrokeColor}
+                  lightFillColor={mergedConfig.lightFillColor}
+                  darkFillColor={mergedConfig.darkFillColor}
+                  // ANIMATION PROPS
+                  enableGradientDraw={mergedConfig.enableGradientDraw}
+                  gradientStartColor={mergedConfig.gradientStartColor}
+                  gradientEndColor={mergedConfig.gradientEndColor}
+                  gradientDuration={mergedConfig.gradientDuration}
+                  resetDuration={mergedConfig.resetDuration}
+                  logoStrokeWidth={mergedConfig.logoStrokeWidth}
+                  animatePaths={mergedConfig.animatePaths}
+                  className="flex-shrink-0 transition-transform duration-300"
                 />
               </div>
               <div>
@@ -121,6 +203,7 @@ export default function PortfolioContentWithSlot({
   h1,
   h2,
   h3,
+  returnIcon,
   children,
 }: Props) {
   const isEditor = typeof window !== 'undefined' && (
@@ -151,7 +234,7 @@ export default function PortfolioContentWithSlot({
     )
   }
 
-  // LIVE SITE - No React.lazy, just render directly
+  // LIVE SITE
   return (
     <Suspense fallback={<div>Loading portfolio content...</div>}>
       <LivePortfolioContent 
@@ -162,6 +245,7 @@ export default function PortfolioContentWithSlot({
         h1={h1}
         h2={h2}
         h3={h3}
+        returnIcon={returnIcon}
       >
         {children}
       </LivePortfolioContent>
