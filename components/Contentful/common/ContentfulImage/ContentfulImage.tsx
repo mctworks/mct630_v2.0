@@ -1,8 +1,8 @@
+import React from 'react'
 import Image, { ImageProps } from 'next/image'
 
 import clsx from 'clsx'
 import { isDevelopment } from 'utils/isDevelopment'
-
 
 import { ResolvedField, isAsset } from '../../../../lib/contentful/utils'
 
@@ -14,15 +14,11 @@ type Props = {
 } & Partial<ImageProps>
 
 export function ContentfulImage({ className, field, square, ...rest }: Props) {
-  // On missing or invalid fields, avoid rendering visible warnings (no placeholders).
-  // Instead log details to the console for debugging and return null so the page layout
-  // doesn't show developer UI in preview or production.
   if ('error' in field) {
     if (typeof window !== 'undefined') console.warn('ContentfulImage: field error', field.error)
     return null
   }
 
-  // Accept either a true Contentful Asset or any object with a URL property.
   const data: any = field.data
   if (!data || typeof data !== 'object') {
     if (typeof window !== 'undefined') console.warn('ContentfulImage: field is not an object', field.data)
@@ -34,14 +30,40 @@ export function ContentfulImage({ className, field, square, ...rest }: Props) {
     return null
   }
 
+  const src = String(data.url).startsWith('//') ? `https:${data.url}` : String(data.url)
+  const isPdf = data.contentType === 'application/pdf' || src.toLowerCase().includes('.pdf')
+
+  if (isPdf) {
+    return React.createElement(
+      'div',
+      { className: clsx(className, 'w-full') },
+      React.createElement('iframe', {
+        src,
+        className: 'w-full',
+        style: { minHeight: '600px', border: 'none' },
+        title: data.title ?? 'PDF document',
+      }),
+      React.createElement(
+        'a',
+        {
+          href: src,
+          target: '_blank',
+          rel: 'noopener noreferrer',
+          className: 'inline-block mt-2 rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700',
+        },
+        'Open PDF'
+      )
+    )
+  }
+
   return (
     <Image
       {...rest}
       className={clsx(className, square && 'aspect-square object-cover')}
-      src={field.data.url}
-      alt={field.data.title ?? 'No alt text provided.'}
-      width={field.data.width ?? 200}
-      height={field.data.height ?? 200}
+      src={data.url}
+      alt={data.title ?? 'No alt text provided.'}
+      width={data.width ?? 200}
+      height={data.height ?? 200}
     />
   )
 }

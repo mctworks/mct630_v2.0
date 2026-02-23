@@ -1,4 +1,5 @@
 // ContentfulRichText.tsx - COMPLETE FIXED VERSION
+import React from 'react'
 import { Options, documentToReactComponents } from '@contentful/rich-text-react-renderer'
 import { BLOCKS, INLINES } from '@contentful/rich-text-types'
 import clsx from 'clsx'
@@ -21,7 +22,52 @@ type Props = {
   h6ClassName?: string
 }
 
-// Create options with heading classes
+function normalizeSrc(url: string): string {
+  return String(url).startsWith('//') ? `https:${url}` : String(url)
+}
+
+function isBanner(src: string, bannerUrl?: string): boolean {
+  if (!bannerUrl) return false
+  try {
+    return normalizeSrc(bannerUrl) === src
+  } catch {
+    return false
+  }
+}
+
+function renderAsset(src: string, alt: string, contentType: string, className?: string): React.ReactElement {
+  const isPdf = contentType === 'application/pdf' || src.toLowerCase().includes('.pdf')
+
+  if (isPdf) {
+    return React.createElement(
+      'div',
+      { className: 'my-6 w-full' },
+      React.createElement('iframe', {
+        src,
+        className: 'w-full',
+        style: { minHeight: '600px', border: 'none' },
+        title: alt || 'PDF document',
+      }),
+      React.createElement(
+        'a',
+        {
+          href: src,
+          target: '_blank',
+          rel: 'noopener noreferrer',
+          className: 'inline-block mt-2 rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700',
+        },
+        'Open PDF'
+      )
+    )
+  }
+
+  return React.createElement('img', {
+    src,
+    alt,
+    className: clsx('mx-auto my-4 max-w-full rounded', className),
+  })
+}
+
 const createOptions = (props: Props): Options => ({
   renderNode: {
     [BLOCKS.PARAGRAPH]: (node, children) => (
@@ -67,39 +113,38 @@ const createOptions = (props: Props): Options => ({
         {children}
       </a>
     ),
-    // Inline asset hyperlinks (images embedded inline)
     [INLINES.ASSET_HYPERLINK]: (node) => {
       const target = (node.data && node.data.target) || {}
       const url = target?.fields?.file?.url || target?.file?.url || target?.url
       if (!url) return null
-      const src = String(url).startsWith('//') ? `https:${url}` : String(url)
+      const src = normalizeSrc(String(url))
+      if (isBanner(src, props.bannerUrl)) return null
       const alt = target?.fields?.title || target?.fields?.description || ''
-      // If this inline asset matches the banner, skip rendering to avoid duplicate banner
-      try {
-        const banner = props.bannerUrl ? (String(props.bannerUrl).startsWith('//') ? `https:${props.bannerUrl}` : String(props.bannerUrl)) : null
-        if (banner && banner === src) return null
-      } catch (e) {
-        // ignore
+      const contentType = target?.fields?.file?.contentType || target?.contentType || ''
+      const isPdf = contentType === 'application/pdf' || src.toLowerCase().includes('.pdf')
+      if (isPdf) {
+        return React.createElement(
+          'a',
+          { href: src, target: '_blank', rel: 'noopener noreferrer', className: 'text-blue-600 hover:underline' },
+          alt || 'View PDF'
+        )
       }
-      return <img src={src} alt={alt} className="inline-block max-w-full align-middle rounded" />
+      return React.createElement('img', {
+        src,
+        alt,
+        className: 'inline-block max-w-full align-middle rounded',
+      })
     },
-    // Embedded entries may contain images or other media - attempt to resolve image file
     [BLOCKS.EMBEDDED_ENTRY]: (node) => {
       const target = (node.data && node.data.target) || {}
-      // Common shapes: target.fields.file.url, target.fields.image.fields.file.url
       const url = target?.fields?.file?.url || target?.fields?.image?.fields?.file?.url || target?.file?.url || target?.url
       if (!url) return null
-      const src = String(url).startsWith('//') ? `https:${url}` : String(url)
+      const src = normalizeSrc(String(url))
       const alt = target?.fields?.title || target?.fields?.description || ''
-      return (
-        <div className="my-6">
-          <img src={src} alt={alt} className="mx-auto my-4 max-w-full rounded" />
-        </div>
-      )
+      const contentType = target?.fields?.file?.contentType || target?.contentType || ''
+      return React.createElement('div', { className: 'my-6' }, renderAsset(src, alt, contentType))
     },
-    // Render embedded assets (images) inside rich text
     [BLOCKS.EMBEDDED_ASSET]: (node) => {
-      // First try to resolve the asset from the document's links (recommended)
       const id = node?.data?.target?.sys?.id
       let asset: any = null
       try {
@@ -109,27 +154,19 @@ const createOptions = (props: Props): Options => ({
           const inlineAssets = links?.assets?.inline || []
           asset = [...blockAssets, ...inlineAssets].find((a: any) => a?.sys?.id === id) || null
         }
-      } catch (err) {
+      } catch {
         // ignore
       }
 
-      // Fallback to any shape present on the node itself
       const url = asset?.url || asset?.fields?.file?.url || node?.data?.target?.url || null
       if (!url) return null
-      const src = String(url).startsWith('//') ? `https:${url}` : String(url)
-      // If a bannerUrl prop was passed and it matches this embedded asset URL, skip rendering
-      try {
-        const banner = props.bannerUrl ? (String(props.bannerUrl).startsWith('//') ? `https:${props.bannerUrl}` : String(props.bannerUrl)) : null
-        if (banner && banner === src) return null
-      } catch (e) {
-        // ignore
-      }
+      const src = normalizeSrc(String(url))
+      if (isBanner(src, props.bannerUrl)) return null
+
       const alt = asset?.title || asset?.fields?.title || asset?.description || ''
-      return (
-        <div className="my-6">
-          <img src={src} alt={alt} className="mx-auto my-4 max-w-full rounded" />
-        </div>
-      )
+      const contentType = asset?.contentType || asset?.fields?.file?.contentType || ''
+
+      return React.createElement('div', { className: 'my-6' }, renderAsset(src, alt, contentType))
     },
   },
 })
@@ -145,10 +182,10 @@ function proseRichTextColor(textColor: Props['textColor']) {
   }
 }
 
-export function ContentfulRichText({ 
-  className, 
-  textColor, 
-  field, 
+export function ContentfulRichText({
+  className,
+  textColor,
+  field,
   bannerUrl,
   alignment = 'left',
   h1ClassName,
@@ -179,19 +216,13 @@ export function ContentfulRichText({
     textColor,
     bannerUrl,
     field,
-    alignment
+    alignment,
   })
 
-  // Development-only debug: log node types and embedded asset counts to help diagnose missing images
   if (isDevelopment() && field && typeof field === 'object' && 'data' in field && field.data && typeof field.data === 'object') {
     try {
       const doc = (field as any).data.json
       if (doc && doc.nodeType === 'document') {
-        const flat = JSON.stringify(doc, (k, v) => (k === 'content' ? (Array.isArray(v) ? `[${v.length} items]` : v) : v), 2)
-        // eslint-disable-next-line no-console
-        console.debug('ContentfulRichText - document preview:', { nodeCount: doc.content?.length ?? 0, sample: flat.slice(0, 1000) })
-
-        // Count embedded asset nodes
         let embeddedCount = 0
         const walk = (node: any) => {
           if (!node || typeof node !== 'object') return
@@ -199,16 +230,13 @@ export function ContentfulRichText({
           if (Array.isArray(node.content)) node.content.forEach(walk)
         }
         walk(doc)
-        // eslint-disable-next-line no-console
         console.debug('ContentfulRichText - embedded asset nodes found:', embeddedCount)
       }
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.warn('Failed to analyze rich text document for debugging', err)
+    } catch {
+      // ignore
     }
   }
 
-  // Create alignment classes
   const alignmentClasses = {
     left: 'items-start text-left',
     right: 'items-end text-right',
@@ -218,10 +246,9 @@ export function ContentfulRichText({
   return (
     <div
       className={clsx(
-       'prose',
+        'prose',
         alignmentClasses,
         proseRichTextColor(textColor),
-        //className
       )}
     >
       {documentToReactComponents(field.data.json, options)}
