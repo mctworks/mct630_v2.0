@@ -35,37 +35,40 @@ function isBanner(src: string, bannerUrl?: string): boolean {
   }
 }
 
-function renderAsset(src: string, alt: string, contentType: string, className?: string): React.ReactElement {
+function PdfViewer({ src, title }: { src: string; title: string }) {
+  const viewerSrc = `https://docs.google.com/viewer?url=${encodeURIComponent(src)}&embedded=true`
+
+  return (
+    <div className="my-6 w-full">
+      <iframe
+        src={viewerSrc}
+        className="w-full"
+        style={{ minHeight: '600px', border: 'none' }}
+        title={title}
+        loading="lazy"
+      />
+      <a
+        href={src}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-block mt-2 rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 text-sm"
+      >
+        Open PDF in new tab
+      </a>
+    </div>
+  )
+}
+
+function renderAsset(src: string, alt: string, contentType: string): React.ReactElement {
   const isPdf = contentType === 'application/pdf' || src.toLowerCase().includes('.pdf')
 
   if (isPdf) {
-    return React.createElement(
-      'div',
-      { className: 'my-6 w-full' },
-      React.createElement('iframe', {
-        src,
-        className: 'w-full',
-        style: { minHeight: '600px', border: 'none' },
-        title: alt || 'PDF document',
-      }),
-      React.createElement(
-        'a',
-        {
-          href: src,
-          target: '_blank',
-          rel: 'noopener noreferrer',
-          className: 'inline-block mt-2 rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700',
-        },
-        'Open PDF'
-      )
-    )
+    return <PdfViewer src={src} title={alt || 'PDF document'} />
   }
 
-  return React.createElement('img', {
-    src,
-    alt,
-    className: clsx('mx-auto my-4 max-w-full rounded', className),
-  })
+  return (
+    <img src={src} alt={alt} className="mx-auto my-4 max-w-full rounded" />
+  )
 }
 
 const createOptions = (props: Props): Options => ({
@@ -123,17 +126,15 @@ const createOptions = (props: Props): Options => ({
       const contentType = target?.fields?.file?.contentType || target?.contentType || ''
       const isPdf = contentType === 'application/pdf' || src.toLowerCase().includes('.pdf')
       if (isPdf) {
-        return React.createElement(
-          'a',
-          { href: src, target: '_blank', rel: 'noopener noreferrer', className: 'text-blue-600 hover:underline' },
-          alt || 'View PDF'
+        return (
+          <a href={src} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+            {alt || 'View PDF'}
+          </a>
         )
       }
-      return React.createElement('img', {
-        src,
-        alt,
-        className: 'inline-block max-w-full align-middle rounded',
-      })
+      return (
+        <img src={src} alt={alt} className="inline-block max-w-full align-middle rounded" />
+      )
     },
     [BLOCKS.EMBEDDED_ENTRY]: (node) => {
       const target = (node.data && node.data.target) || {}
@@ -142,7 +143,11 @@ const createOptions = (props: Props): Options => ({
       const src = normalizeSrc(String(url))
       const alt = target?.fields?.title || target?.fields?.description || ''
       const contentType = target?.fields?.file?.contentType || target?.contentType || ''
-      return React.createElement('div', { className: 'my-6' }, renderAsset(src, alt, contentType))
+      return (
+        <div className="my-6">
+          {renderAsset(src, alt, contentType)}
+        </div>
+      )
     },
     [BLOCKS.EMBEDDED_ASSET]: (node) => {
       const id = node?.data?.target?.sys?.id
@@ -166,7 +171,11 @@ const createOptions = (props: Props): Options => ({
       const alt = asset?.title || asset?.fields?.title || asset?.description || ''
       const contentType = asset?.contentType || asset?.fields?.file?.contentType || ''
 
-      return React.createElement('div', { className: 'my-6' }, renderAsset(src, alt, contentType))
+      return (
+        <div className="my-6">
+          {renderAsset(src, alt, contentType)}
+        </div>
+      )
     },
   },
 })

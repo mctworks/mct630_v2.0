@@ -13,6 +13,30 @@ type Props = {
   key?: string
 } & Partial<ImageProps>
 
+function PdfViewer({ src, title, className }: { src: string; title: string; className?: string }) {
+  const viewerSrc = `https://docs.google.com/viewer?url=${encodeURIComponent(src)}&embedded=true`
+
+  return (
+    <div className={clsx(className, 'w-full')}>
+      <iframe
+        src={viewerSrc}
+        className="w-full"
+        style={{ minHeight: '600px', border: 'none' }}
+        title={title}
+        loading="lazy"
+      />
+      <a
+        href={src}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-block mt-2 rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 text-sm"
+      >
+        Open PDF in new tab
+      </a>
+    </div>
+  )
+}
+
 export function ContentfulImage({ className, field, square, ...rest }: Props) {
   if ('error' in field) {
     if (typeof window !== 'undefined') console.warn('ContentfulImage: field error', field.error)
@@ -34,25 +58,12 @@ export function ContentfulImage({ className, field, square, ...rest }: Props) {
   const isPdf = data.contentType === 'application/pdf' || src.toLowerCase().includes('.pdf')
 
   if (isPdf) {
-    return React.createElement(
-      'div',
-      { className: clsx(className, 'w-full') },
-      React.createElement('iframe', {
-        src,
-        className: 'w-full',
-        style: { minHeight: '600px', border: 'none' },
-        title: data.title ?? 'PDF document',
-      }),
-      React.createElement(
-        'a',
-        {
-          href: src,
-          target: '_blank',
-          rel: 'noopener noreferrer',
-          className: 'inline-block mt-2 rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700',
-        },
-        'Open PDF'
-      )
+    return (
+      <PdfViewer
+        src={src}
+        title={data.title ?? 'PDF document'}
+        className={className}
+      />
     )
   }
 
