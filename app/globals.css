@@ -749,7 +749,7 @@ html, body {
 }
  
 /* NavMenuPlus - header icon box spacing adjustment */
-div#header-icons {
+/* div#header-icons {
     margin-right: 80vw;
 }
 
@@ -757,4 +757,4 @@ div#header-icons {
   div#header-icons {
     margin-right: 42vw;
 }
-}
+} */
