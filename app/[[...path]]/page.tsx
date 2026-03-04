@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import type { Metadata } from 'next'
 import { Page as MakeswiftPage } from '@makeswift/runtime/next'
 import { getSiteVersion } from '@makeswift/runtime/next/server'
 import { client } from '@/lib/makeswift/client'
@@ -6,6 +7,65 @@ import '@/lib/makeswift/components'
 import { ContentfulProvider } from '@/lib/contentful/provider'
 import { getAllBlogs, getBlog } from '@/lib/contentful/fetchers'
 import { getAllPortfolioPieces, getPortfolioPiece } from '@/lib/contentful/fetchers'
+
+export async function generateMetadata({ params }: { params: Promise<{ path: string[] }> }): Promise<Metadata> {
+  const { path } = await params
+  const currentPath = path?.join('/') || '/'
+  
+  const baseDescription = 'Portfolio and Blog for Michael C. Thompson, a full-stack web developer specializing in front-end development based in the Atlanta area.'
+  
+  const baseMetadata: Metadata = {
+    title: 'MCT630 | Michael C. Thompson | Full-Stack Web Developer',
+    description: baseDescription,
+    openGraph: {
+      title: 'MCT630 | Michael C. Thompson',
+      description: 'Blog & portfolio for Atlanta-based full-stack web developer specializing in front-end development and design.',
+      images: [{ url: '/mct630_og_card.jpeg' }],
+    },
+  }
+
+  // Blog post page
+  if (currentPath.startsWith('/blog/') && currentPath !== '/blog') {
+    const slug = currentPath.replace('/blog/', '')
+    if (slug !== '[slug]') {
+      const blogPost = await getBlog(slug)
+      if (blogPost && blogPost.title) {
+        const desc = blogPost.description ? String(blogPost.description) : baseDescription
+        return {
+          title: `${blogPost.title} - MCT630`,
+          description: desc,
+          openGraph: {
+            title: `${blogPost.title} - Michael C. Thompson | MCT630 : Blog`,
+            description: desc,
+            images: blogPost.banner?.url ? [{ url: blogPost.banner.url }] : [{ url: '/mct630_og_card.jpeg' }],
+          },
+        }
+      }
+    }
+  }
+
+  // Portfolio piece page
+  if (currentPath.startsWith('/portfolio/') && currentPath !== '/portfolio') {
+    const slug = currentPath.replace('/portfolio/', '')
+    if (slug !== '[slug]') {
+      const piece = await getPortfolioPiece(slug)
+      if (piece && piece.name) {
+        const desc = piece.description ? String(piece.description) : baseDescription
+        return {
+          title: `${piece.name} - MCT630`,
+          description: desc,
+          openGraph: {
+            title: `${piece.name} - Michael C. Thompson | MCT630 : Portfolio`,
+            description: desc,
+            images: piece.banner?.url ? [{ url: piece.banner.url }] : [{ url: '/mct630_og_card.jpeg' }],
+          },
+        }
+      }
+    }
+  }
+
+  return baseMetadata
+}
 
 export default async function Page({ params }: { params: Promise<{ path: string[] }> }) {
   const { path } = await params

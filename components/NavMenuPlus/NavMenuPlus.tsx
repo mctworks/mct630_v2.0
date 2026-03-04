@@ -98,6 +98,9 @@ export function NavMenuPlus({ className, logo, links, headerBar }: any) {
         requestAnimationFrame(() => {
           animateNavStatus()
         })
+        // hide burger button when menu opens
+        const burgerBtn = document.querySelector('.bm-burger-button') as HTMLElement | null
+        if (burgerBtn) burgerBtn.style.display = 'none'
       } else {
         // Clean up when closing
         if (splitRef.current) {
@@ -108,9 +111,19 @@ export function NavMenuPlus({ className, logo, links, headerBar }: any) {
           animationRef.current.kill()
           animationRef.current = null
         }
+        // restore burger button when menu closes
+        const burgerBtn = document.querySelector('.bm-burger-button') as HTMLElement | null
+        if (burgerBtn) burgerBtn.style.display = 'block'
       }
     }
-  }, [animateNavStatus, currentStatus]) // Added dependencies
+  }, [animateNavStatus, currentStatus])
+
+  // Handle link click to close menu
+  const handleLinkClick = useCallback(() => {
+    setIsOpen(false)
+    const burgerBtn = document.querySelector('.bm-burger-button') as HTMLElement | null
+    if (burgerBtn) burgerBtn.style.display = 'block'
+  }, [])
 
   // Compute status with useMemo
   const computeStatus = useMemo(() => {
@@ -264,11 +277,12 @@ export function NavMenuPlus({ className, logo, links, headerBar }: any) {
                         gradientEnd={linkItem.gradientEnd}
                         strokeWidth={linkItem.strokeWidth}
                         splashImage={linkItem.splashImage}
+                        onClick={handleLinkClick}
                       >
                         <span className="menu-item">{linkItem.label}</span>
                       </TransitionLink>
                     ) : (
-                      <Link href={linkItem.link.href} target={linkItem.link.target} className="menu-item">
+                      <Link href={linkItem.link.href} target={linkItem.link.target} className="menu-item" onClick={handleLinkClick}>
                         {linkItem.label}
                       </Link>
                     )}

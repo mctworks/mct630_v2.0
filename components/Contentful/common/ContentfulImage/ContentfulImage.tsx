@@ -71,6 +71,12 @@ export function ContentfulImage({ className, field, square, ...rest }: Props) {
     <Image
       {...rest}
       className={clsx(className, square && 'aspect-square object-cover')}
+      style={{
+        paddingLeft: 'clamp(0px, 9em, calc((100% - 1024px) / 2))',
+        paddingRight: 'clamp(0px, 9em, calc((100% - 1024px) / 2))',
+        boxSizing: 'border-box',
+        ...rest.style,
+      }}
       src={data.url}
       alt={data.title ?? 'No alt text provided.'}
       width={data.width ?? 200}

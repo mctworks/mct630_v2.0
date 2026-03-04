@@ -61,9 +61,54 @@ function PdfViewer({ src, title }: { src: string; title: string }) {
 
 function renderAsset(src: string, alt: string, contentType: string): React.ReactElement {
   const isPdf = contentType === 'application/pdf' || src.toLowerCase().includes('.pdf')
+  const isVideo =
+    contentType.startsWith('video/') || /\.(mp4|webm|ogg|mov)$/i.test(src)
+  const isYouTube = /(?:youtube\.com|youtu\.be)/i.test(src)
+  const isVimeo = /vimeo\.com/i.test(src)
 
   if (isPdf) {
     return <PdfViewer src={src} title={alt || 'PDF document'} />
+  }
+  if (isYouTube || isVimeo) {
+    // convert URL to embeddable form if necessary
+    let embedUrl = src
+    if (isYouTube) {
+      // handle watch links and short links
+      if (embedUrl.includes('watch?v=')) {
+        embedUrl = embedUrl.replace('watch?v=', 'embed/')
+      }
+      if (embedUrl.includes('youtu.be/')) {
+        embedUrl = embedUrl.replace('youtu.be/', 'www.youtube.com/embed/')
+      }
+    }
+    // vimeo links are typically already embedable
+    return (
+      <div className="my-6 w-full aspect-video">
+        <iframe
+          src={embedUrl}
+          className="w-full h-full"
+          frameBorder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          title={alt || 'Embedded video'}
+        />
+      </div>
+    )
+  }
+
+  if (isVideo) {
+    // render a native video element; most modern browsers will handle it
+    return (
+      <video
+        controls
+        className="mx-auto my-4 max-w-full rounded"
+        aria-label={alt || 'Embedded video'}
+      >
+        <source src={src} type={contentType || 'video/mp4'} />
+        {/* fallback text */}
+        Your browser does not support the video tag.
+      </video>
+    )
   }
 
   return (
@@ -125,11 +170,44 @@ const createOptions = (props: Props): Options => ({
       const alt = target?.fields?.title || target?.fields?.description || ''
       const contentType = target?.fields?.file?.contentType || target?.contentType || ''
       const isPdf = contentType === 'application/pdf' || src.toLowerCase().includes('.pdf')
+      const isVideo =
+        contentType.startsWith('video/') || /\.(mp4|webm|ogg|mov)$/i.test(src)
+      const isYouTube = /(?:youtube\.com|youtu\.be)/i.test(src)
+      const isVimeo = /vimeo\.com/i.test(src)
       if (isPdf) {
         return (
           <a href={src} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
             {alt || 'View PDF'}
           </a>
+        )
+      }
+      if (isYouTube || isVimeo) {
+        let embedUrl = src
+        if (isYouTube) {
+          if (embedUrl.includes('watch?v=')) embedUrl = embedUrl.replace('watch?v=', 'embed/')
+          if (embedUrl.includes('youtu.be/')) embedUrl = embedUrl.replace('youtu.be/', 'www.youtube.com/embed/')
+        }
+        return (
+          <iframe
+            src={embedUrl}
+            className="inline-block max-w-full align-middle"
+            frameBorder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            title={alt || 'Embedded video'}
+          />
+        )
+      }
+      if (isVideo) {
+        return (
+          <video
+            controls
+            className="inline-block max-w-full align-middle rounded"
+            aria-label={alt || 'Embedded video'}
+          >
+            <source src={src} type={contentType || 'video/mp4'} />
+            Your browser does not support the video tag.
+          </video>
         )
       }
       return (
