@@ -4,6 +4,7 @@ import { Options, documentToReactComponents } from '@contentful/rich-text-react-
 import { BLOCKS, INLINES } from '@contentful/rich-text-types'
 import clsx from 'clsx'
 import { isDevelopment } from 'utils/isDevelopment'
+import { sanitizeError } from '@/lib/errorUtils'
 
 import { Warning } from '@/components/Warning'
 import { ResolvedField, isRichText, useEntryField } from '@/lib/contentful/utils'
@@ -319,8 +320,9 @@ export function ContentfulRichText({
         walk(doc)
         console.debug('ContentfulRichText - embedded asset nodes found:', embeddedCount)
       }
-    } catch {
-      // ignore
+    } catch (error) {
+      const safeError = sanitizeError(error)
+      console.debug('Error inspecting rich text structure:', safeError.message)
     }
   }
 

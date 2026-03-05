@@ -6,6 +6,7 @@ import { Asset, BlogPostBodyLinks, TypeFragment, TypesDocument } from '@/generat
 import { client } from '@/lib/contentful/client'
 import { useContentfulData } from '@/lib/contentful/provider'
 import { BlogPost } from '@/vibes/soul/primitives/blog-post-card'
+import { sanitizeError } from '@/lib/errorUtils'
 
 // Import the type from fetchers.ts
 import { QueriedBlogPost } from './fetchers'
@@ -184,7 +185,8 @@ export const formatBlog = (blog: QueriedBlogPost, includeBody: boolean = true): 
           const htmlContent = documentToHtmlString(blog.body.json)
           content = htmlContent || 'No content available'
         } catch (error) {
-          console.error('Error converting rich text to HTML:', error)
+          const safeError = sanitizeError(error)
+          console.error('Error converting rich text to HTML:', safeError.message)
           content = blog.description || 'No content available'
         }
       }
@@ -211,7 +213,8 @@ export const formatBlog = (blog: QueriedBlogPost, includeBody: boolean = true): 
       href: `/blog/${blog.slug || blog._id}`,
     }
   } catch (error) {
-    console.error('Error formatting blog:', error, blog)
+    const safeError = sanitizeError(error)
+    console.error('Error formatting blog:', safeError.message, blog)
     return null
   }
 }
@@ -227,7 +230,8 @@ export const formatPortfolio = (piece: any): BlogPost | null => {
         const htmlContent = documentToHtmlString(piece.body.json)
         content = htmlContent || (piece.description || 'No content available')
       } catch (err) {
-        console.warn('Error converting portfolio rich text to HTML:', err)
+        const safeError = sanitizeError(err)
+        console.warn('Error converting portfolio rich text to HTML:', safeError.message)
         content = piece.description || 'No content available'
       }
     } else if (piece?.description) {
@@ -245,7 +249,8 @@ export const formatPortfolio = (piece: any): BlogPost | null => {
       href: `/portfolio/${piece.slug || piece._id}`,
     }
   } catch (err) {
-    console.error('Error formatting portfolio piece:', err, piece)
+    const safeError = sanitizeError(err)
+    console.error('Error formatting portfolio piece:', safeError.message, piece)
     return null
   }
 }
