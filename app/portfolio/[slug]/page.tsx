@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { MakeswiftComponent } from '@makeswift/runtime/next'
 import { getSiteVersion } from '@makeswift/runtime/next/server'
@@ -6,8 +7,55 @@ import { MakeswiftProvider } from '@/lib/makeswift/provider'
 import { client } from '@/lib/contentful/client'
 import { client as MakeswiftClient } from '@/lib/makeswift/client'
 import { ContentfulProvider } from '@/lib/contentful/provider'
-import { getPortfolioPiece } from '@/lib/contentful/fetchers'
+import { getAllPortfolioPieces, getPortfolioPiece } from '@/lib/contentful/fetchers'
 import { PORTFOLIO_CONTENT_WITH_SLOT_TYPE } from '@/components/PortfolioContentWithSlot/PortfolioContentWithSlot.makeswift'
+
+function normalizeUrl(url?: string | null): string | null {
+  if (!url) return null
+  return url.startsWith('//') ? `https:${url}` : url
+}
+
+async function buildPortfolioMetadata(slug?: string): Promise<Metadata> {
+  const baseDesc =
+    'Portfolio and Blog for Michael C. Thompson, a full-stack web developer specializing in front-end development based in the Atlanta area.'
+  const metadataBase = new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://mct630.com')
+
+  if (slug) {
+    const piece = await getPortfolioPiece(slug)
+    if (piece?.name) {
+      const title = `MCT630 | Portfolio | ${piece.name}`
+      const description = typeof piece.description === 'string' && piece.description
+        ? piece.description
+        : baseDesc
+      const imageUrl = normalizeUrl(piece.banner?.url) ?? '/mct630_og_card.jpeg'
+
+      return {
+        metadataBase,
+        title,
+        description,
+        openGraph: {
+          title,
+          description,
+          images: [{ url: imageUrl }],
+        },
+        twitter: { card: 'summary_large_image' },
+      }
+    }
+  }
+
+  return {
+    metadataBase,
+    title: 'MCT630 | Michael C. Thompson | Full-Stack Web Developer',
+    description: baseDesc,
+    openGraph: { images: [{ url: '/mct630_og_card.jpeg' }] },
+    twitter: { card: 'summary_large_image' },
+  }
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params
+  return buildPortfolioMetadata(slug)
+}
 
 export async function generateStaticParams() {
   const { getAllPortfolioPieces } = await import('@/lib/contentful/fetchers')
@@ -30,7 +78,6 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
     return notFound()
   }
 
-  // Use client.request to get the raw GraphQL collection
   const QUERY = `
     query GetPortfolioPiece($filter: PortfolioPieceFilter) {
       portfolioPieceCollection(where: $filter, limit: 1) {
@@ -58,7 +105,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
 
   try {
     const resolved = await getPortfolioPiece(slug)
-    if (resolved && portfolioPieceCollection && portfolioPieceCollection.items && portfolioPieceCollection.items[0]) {
+    if (resolved && portfolioPieceCollection?.items?.[0]) {
       ;(portfolioPieceCollection.items[0] as any).body = {
         ...(portfolioPieceCollection.items[0] as any).body,
         ...(resolved.body || {}),

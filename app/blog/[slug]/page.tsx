@@ -11,7 +11,11 @@ import { ContentfulProvider } from '@/lib/contentful/provider'
 import { client as MakeswiftClient } from '@/lib/makeswift/client'
 import { BLOG_CONTENT_WITH_SLOT_TYPE } from '@/components/BlogContentWithSlot/BlogContentWithSlot.makeswift'
 
-// metadata helper for blog posts
+function normalizeUrl(url?: string | null): string | null {
+  if (!url) return null
+  return url.startsWith('//') ? `https:${url}` : url
+}
+
 async function buildBlogMetadata(slug?: string): Promise<Metadata> {
   const baseDesc =
     'Portfolio and Blog for Michael C. Thompson, a full-stack web developer specializing in front-end development based in the Atlanta area.'
@@ -19,10 +23,12 @@ async function buildBlogMetadata(slug?: string): Promise<Metadata> {
 
   if (slug) {
     const blogPost = await getBlog(slug)
-    if (blogPost && blogPost.title) {
-      const title = `${blogPost.title} - MCT630`
-      const description = blogPost.description || baseDesc
-      const imageUrl = blogPost.banner?.url || '/mct630_og_card.jpeg'
+    if (blogPost?.title) {
+      const title = `MCT630 | Blog | ${blogPost.title}`
+      const description = typeof blogPost.description === 'string' && blogPost.description
+        ? blogPost.description
+        : baseDesc
+      const imageUrl = normalizeUrl(blogPost.banner?.url) ?? '/mct630_og_card.jpeg'
 
       return {
         metadataBase,
@@ -38,7 +44,6 @@ async function buildBlogMetadata(slug?: string): Promise<Metadata> {
     }
   }
 
-  // fallback
   return {
     metadataBase,
     title: 'MCT630 | Michael C. Thompson | Full-Stack Web Developer',
@@ -73,7 +78,6 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
     return notFound()
   }
 
-  // Use client.request to get the exact GraphQL type
   const blogData: GetBlogsQuery = await client.request(GetBlogsDocument, {
     filter: { slug },
   })
@@ -83,19 +87,15 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
     return notFound()
   }
 
-  // Try to resolve inline asset links for rich text so embedded images render
   try {
     const resolved = await getBlog(slug)
-    if (resolved && blogData.blogPostCollection && blogData.blogPostCollection.items && blogData.blogPostCollection.items[0]) {
-      // Merge any resolved body.links into the first item
+    if (resolved && blogData.blogPostCollection?.items?.[0]) {
       ;(blogData.blogPostCollection.items[0] as any).body = {
         ...(blogData.blogPostCollection.items[0] as any).body,
         ...(resolved.body || {}),
       }
     }
   } catch (err) {
-    // ignore resolution errors - page should still render without inline links
-    // eslint-disable-next-line no-console
     console.warn('Failed to resolve inline assets for blog body', err)
   }
 
