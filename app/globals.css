@@ -705,14 +705,9 @@ html, body {
 @media (max-width: 767px) {
   .grid.grid-cols-1 {
     justify-items: center;
-    /* Center the grid itself within its container when it collapses
-       to a single column (matches toggling `justify-content: center`
-       in DevTools). */
     justify-content: center;
   }
 
-  /* Ensure children that don't stretch (inline-block, auto width) are
-     centered within the grid cell. */
   .grid.grid-cols-1 > * {
     justify-self: center;
   }
@@ -732,8 +727,7 @@ html, body {
 
   /* If a Makeswift container (e.g. `mx-auto px-4 py-10 ... max-w-none`) wraps
      a grid that collapses to a single column, center the grid and the
-     container on narrow viewports — this reproduces the DevTools fix the
-     user reported without broad Tailwind overrides. */
+     container on narrow viewports . */
   .mx-auto > .grid.grid-cols-1,
   .mx-auto.max-w-none > .grid.grid-cols-1 {
     justify-content: center;

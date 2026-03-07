@@ -10,6 +10,7 @@ import { ThemeConfig } from '@/components/ThemeConfig/ThemeConfig'
 import NavMenuPlus from '@/components/NavMenuPlus/NavMenuPlus'
 import TransitionHandler from '@/components/TransitionHandler/TransitionHandler'
 import './globals.css'
+import { Analytics } from "@vercel/analytics/next"
 
 const body = Poppins({
   display: 'swap',
@@ -31,9 +32,21 @@ const mono = Roboto_Mono({
 })
 
 export const metadata: Metadata = {
+  // base URL used by Next to turn relative asset paths into absolute URLs
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://mct630.com'),
   title: 'MCT630 | Michael C. Thompson | Full-Stack Web Developer',
   description:
     'Portfolio and Blog for Michael C. Thompson, a full-stack web developer specializing in front-end development based in the Atlanta area.',
+  openGraph: {
+    title: 'MCT630 | Michael C. Thompson',
+    description:
+      'Portfolio and Blog for Michael C. Thompson, a full-stack web developer specializing in front-end development based in the Atlanta area.',
+    // a fallback card that lives in public/ so it can be scraped
+    images: [{ url: '/mct630_og_card.jpeg' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+  },
 }
 
 export default async function RootLayout({

@@ -14,7 +14,10 @@ export async function generateMetadata({ params }: { params: Promise<{ path: str
   
   const baseDescription = 'Portfolio and Blog for Michael C. Thompson, a full-stack web developer specializing in front-end development based in the Atlanta area.'
   
+  const metadataBase = new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://mct630.com')
+
   const baseMetadata: Metadata = {
+    metadataBase,
     title: 'MCT630 | Michael C. Thompson | Full-Stack Web Developer',
     description: baseDescription,
     openGraph: {
@@ -22,6 +25,7 @@ export async function generateMetadata({ params }: { params: Promise<{ path: str
       description: 'Blog & portfolio for Atlanta-based full-stack web developer specializing in front-end development and design.',
       images: [{ url: '/mct630_og_card.jpeg' }],
     },
+    twitter: { card: 'summary_large_image' },
   }
 
   // Blog post page
@@ -32,6 +36,7 @@ export async function generateMetadata({ params }: { params: Promise<{ path: str
       if (blogPost && blogPost.title) {
         const desc = blogPost.description ? String(blogPost.description) : baseDescription
         return {
+          metadataBase,
           title: `${blogPost.title} - MCT630`,
           description: desc,
           openGraph: {
@@ -39,6 +44,7 @@ export async function generateMetadata({ params }: { params: Promise<{ path: str
             description: desc,
             images: blogPost.banner?.url ? [{ url: blogPost.banner.url }] : [{ url: '/mct630_og_card.jpeg' }],
           },
+          twitter: { card: 'summary_large_image' },
         }
       }
     }
@@ -52,6 +58,7 @@ export async function generateMetadata({ params }: { params: Promise<{ path: str
       if (piece && piece.name) {
         const desc = piece.description ? String(piece.description) : baseDescription
         return {
+          metadataBase,
           title: `${piece.name} - MCT630`,
           description: desc,
           openGraph: {
@@ -59,6 +66,7 @@ export async function generateMetadata({ params }: { params: Promise<{ path: str
             description: desc,
             images: piece.banner?.url ? [{ url: piece.banner.url }] : [{ url: '/mct630_og_card.jpeg' }],
           },
+          twitter: { card: 'summary_large_image' },
         }
       }
     }

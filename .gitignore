@@ -67,3 +67,5 @@ VERIFICATION_CHECKLIST.md
 .next-dev.log
 .next-dev.pid
 
+FRAME_JOIN_FIX.md
+.gitignore
