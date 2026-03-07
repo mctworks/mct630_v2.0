@@ -11,10 +11,11 @@ import { getAllPortfolioPieces, getPortfolioPiece } from '@/lib/contentful/fetch
 export async function generateMetadata({ params }: { params: Promise<{ path: string[] }> }): Promise<Metadata> {
   const { path } = await params
   const currentPath = path?.join('/') || '/'
-  
-  const baseDescription = 'Portfolio and Blog for Michael C. Thompson, a full-stack web developer specializing in front-end development based in the Atlanta area.'
-  
+  console.log('🔍 generateMetadata called for:', currentPath)
   const metadataBase = new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://mct630.com')
+
+  const baseDescription =
+    'Portfolio and Blog for Michael C. Thompson, a full-stack web developer specializing in front-end development based in the Atlanta area.'
 
   const baseMetadata: Metadata = {
     metadataBase,
@@ -31,10 +32,17 @@ export async function generateMetadata({ params }: { params: Promise<{ path: str
   // Blog post page
   if (currentPath.startsWith('/blog/') && currentPath !== '/blog') {
     const slug = currentPath.replace('/blog/', '')
+    console.log('🔍 blog slug metadata for', slug)
     if (slug !== '[slug]') {
       const blogPost = await getBlog(slug)
+      console.log('🔍 blogPost result', {
+        title: blogPost?.title,
+        banner: blogPost?.banner?.url,
+      })
       if (blogPost && blogPost.title) {
         const desc = blogPost.description ? String(blogPost.description) : baseDescription
+        const imageUrl = blogPost.banner?.url || '/mct630_og_card.jpeg'
+        console.log('🔍 constructing metadata for blog', { desc, imageUrl })
         return {
           metadataBase,
           title: `${blogPost.title} - MCT630`,
@@ -42,7 +50,7 @@ export async function generateMetadata({ params }: { params: Promise<{ path: str
           openGraph: {
             title: `${blogPost.title} - Michael C. Thompson | MCT630 : Blog`,
             description: desc,
-            images: blogPost.banner?.url ? [{ url: blogPost.banner.url }] : [{ url: '/mct630_og_card.jpeg' }],
+            images: [{ url: imageUrl }],
           },
           twitter: { card: 'summary_large_image' },
         }
@@ -53,10 +61,17 @@ export async function generateMetadata({ params }: { params: Promise<{ path: str
   // Portfolio piece page
   if (currentPath.startsWith('/portfolio/') && currentPath !== '/portfolio') {
     const slug = currentPath.replace('/portfolio/', '')
+    console.log('🔍 portfolio slug metadata for', slug)
     if (slug !== '[slug]') {
       const piece = await getPortfolioPiece(slug)
+      console.log('🔍 portfolio piece result', {
+        name: piece?.name,
+        banner: piece?.banner?.url,
+      })
       if (piece && piece.name) {
         const desc = piece.description ? String(piece.description) : baseDescription
+        const imageUrl = piece.banner?.url || '/mct630_og_card.jpeg'
+        console.log('🔍 constructing metadata for portfolio', { desc, imageUrl })
         return {
           metadataBase,
           title: `${piece.name} - MCT630`,
@@ -64,7 +79,7 @@ export async function generateMetadata({ params }: { params: Promise<{ path: str
           openGraph: {
             title: `${piece.name} - Michael C. Thompson | MCT630 : Portfolio`,
             description: desc,
-            images: piece.banner?.url ? [{ url: piece.banner.url }] : [{ url: '/mct630_og_card.jpeg' }],
+            images: [{ url: imageUrl }],
           },
           twitter: { card: 'summary_large_image' },
         }
