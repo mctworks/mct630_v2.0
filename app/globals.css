@@ -749,6 +749,6 @@ div#header-icons {
 
 @media screen and (max-width: 425px) {
   div#header-icons {
-    margin-right: 42vw;
+    margin-right: 42vw; 
 }
 }
