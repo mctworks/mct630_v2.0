@@ -1,61 +1,128 @@
-# MCT630 Version 2.0
+# MCT630.com (Version 2.0)
 
-PLEASE NOTE: This is a work in active development. Everything is absolutely subject to change, including this README. 
+**Live Site**: [https://mct630.com](https://mct630.com)  
+**Staging**: [https://mct630-v2-0.vercel.app](https://mct630-v2-0.vercel.app)
 
-## Description
+## Tech Stack
 
-MCT630 Ver 2.0 is a portfolio/blog developed in React/Node.JS aimed at replacing my current portfolio. The version that's currently on my domain as of right now was thrown together very hastily with a jury-rigged free Webflow setup in three days back in late 2023 between between contract/freelance roles, and wasn't a fair representation of my work even back then, much less now. My aim is to create something that not only shows off my design skills, but also my skills as an engineer who can build out vibrant, accessible and responsive solutions for business and organizations that can be easily edited by a non-technical team member when needed.
+- **Framework**: Next.js 15, React 19
+- **Language**: TypeScript
+- **CMS/Editor**: Makeswift, Contentful
+- **Styling**: Tailwind CSS
+- **Animations**: GSAP
+- **Data Fetching**: SWR, GraphQL
+- **Hosting/Deployment**: Vercel
 
-This version implements a Makeswift/Contentful integration, using the Makeswift/Contentful workshop project by [James Q Quick](https://github.com/jamesqquick) at RenderATL in June 2025 as a starting point: https://github.com/jamesqquick/makeswift-contentful-workshop
+## Project Overview
 
-## Demo
-Everything pushed to this repo is running on Vercel for those interested in seeing it in action:
-[MCT630 Ver. 2.0 WIP](https://mct630-v2-0.vercel.app/)
+MCT630.com is a portfolio and blog platform built on a Makeswift/Contentful foundation. The project started from the [Makeswift/Contentful workshop at RenderATL 2025](https://github.com/jamesqquick/makeswift-contentful-workshop) and has been customized into a full-featured site with custom components, page transitions, and animation systems.
 
-### CURRENT STATUS
-* Most of the major components and more permanent assets have been built, enough to where I feel confident showing it off. You can see NavMenuPlus, animated SVGs via EnhancedSVG, and TransitionLink's "Actraiser Drop" animation (the section links with a light blue border) on the front page. 
-* There's a small demo of the "Logo Splash" TransitionLink animation you can access by clicking the MCT630 logo in the top right-hand corner of the nav bar. This animation is intended for use with navigational links where an Actraiser Drop wouldn't look right.
-* Blog with placeholder content is up, with the standard layout and animations on the blog post list page.
-* Portfolio and About pages are currently test pages with dummy content.
-
-## Components thus far...
+## Core Components
 
 ### ThemeConfig
-
-* Standard React component to handle Dark/Light theme colors (primarily text and background colors.)
-* Includes a standard Dark/Light toggle Makeswift component, but can also detect system/browser preferences.
+Handles dark/light theme switching with system preference detection. Manages theme-aware color variables throughout the application.
 
 ### NavMenuPlus
-
-* Global Makeswift component with some visual bells and whistles over Makeswift's default header/nav
-* Stylized menu that implements [react-buger-menu](https://github.com/negomi/react-burger-menu) as well as some GSAP animation.
-* Accepts link targets as well as an image file via Makeswift editor for logos.
-* Further functionality in progress, including intergration with...
+A navigation component built on react-burger-menu with GSAP animations. Features:
+- Mobile-first responsive design with different behaviors across breakpoints
+- Animated menu transitions with content scaling effects
+- Fully editable links through Makeswift's visual editor
+- Dynamic scrolling text that reflects current page location
 
 ### TransitionLink
-* Makeswift component for a hyperlinked Box with transition effect on click
-* One of two animations to choose from: Actraiser Drop and Logo Splash
-* Link target, div container attributes, as well as animation zoom-in scale and spin rotation easily adjusted in Makeswift editor mode 
+A link wrapper component that triggers page transitions. Two animation types available:
+
+- **"Actraiser Drop"** – Zooms in on the clicked element with a slight rotation
+- **"Logo Splash"** – Animates SVG color properties while zooming
+
+All animation parameters (scale, rotation, duration, easing) are configurable through Makeswift's property panel.
 
 ### EnhancedSVG
-* Makeswift component to handle properly optimized single-color SVGs
-* Able to set a fill color for each Dark/Light mode seperately via Makeswift editor
-* Optionally set a GSAP animation that traces either all or select SVG paths/strokes with two select animation gradient colors, via Makeswift editor mode.
+A component system for SVG manipulation that provides:
+- Dynamic recoloring based on current theme
+- Configurable line-draw GSAP animations for specified paths
+- Animation controls for speed, duration, delay, and path selection via Makeswift editor
 
-## Blog
-Work currently in progress. Utilizes a Contentful integration for content management. Mostly unchanged from the original workshop version as of now, but utilizes a custom Non-Makeswift component to handle animations.
+### Blog Components
+Modified from the original workshop foundation to incorporate TransitionLink and EnhancedSVG functionality. Features:
+- Content managed through Contentful
+- Animated card layouts
+- Fully editable blog slugs
+- Custom animation controls for cards and indicators
 
-## Portfolio
-The portfolio will be similar to the blog, in that it implements a Contentful solution. Current gameplan is to spin it from the blog when the majority of that has been worked/reworked. Portfolio content will be handled seperately from Blog content.
+### Portfolio Components
+Built by extending the blog architecture with:
+- Dedicated Contentful content type
+- Consistent animation patterns
+- Makeswift-editable behavior controls
 
-## Other To-dos
-* Adjust all GSAP animations for prefers-reduced-motion browser setting
-* Content is being written when I'm not building
+## Animation System
 
-## Acknowledgments (WIP)
-First, shoutouts go to the [Torc](https://www.torc.dev/) community, especially Jason Torres for giving me the swift kick in the butt I needed to get this project moving. I'd also like to thank Jason, as well as Taylor Desseyn, for providing feedback for this project.
+All animations are built with GSAP and include reduced-motion considerations. When `prefers-reduced-motion` is enabled at the OS level, intensive transitions (Actraiser Drop, Logo Splash) automatically fall back to soft fades. A manual toggle is also available in the navigation bar.
 
-I'd also like to thank the folks running [RenderATL](https://www.renderatl.com/), without which a lot of aspects of this
-project wouldn't have ever happened. 
+## Development Environment
 
-(still making this list...)
+The project was developed under unconventional constraints, including development on SteamOS/ArchLinux. This influenced performance considerations and testing across different viewport sizes, including handheld device resolutions.
+
+## Tooling
+
+- **LLM Assistance**: GitHub Copilot for day-to-day queries, supplemented by Claude and DeepSeek for component-specific development
+- **Documentation**: Makeswift developer documentation and AI assistant for platform-specific questions
+- **Version Control**: Git
+
+## Getting Started
+
+```bash
+# Clone the repository
+git clone https://github.com/[username]/mct630-v2.git
+
+# Install dependencies
+npm install
+
+# Set up environment variables
+# Required:
+# - MAKESWIFT_SITE_API_KEY
+# - CONTENTFUL_SPACE_ID
+# - CONTENTFUL_ACCESS_TOKEN
+
+# Run development server
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) to view the development environment.
+
+## Environment Variables
+
+```
+MAKESWIFT_SITE_API_KEY=your_makeswift_api_key
+CONTENTFUL_SPACE_ID=your_contentful_space_id
+CONTENTFUL_ACCESS_TOKEN=your_contentful_access_token
+```
+
+## Project Status
+
+**COMPLETED** - All major components and features are implemented and production-ready.
+
+## License
+
+MIT License
+
+Copyright (c) 2026 Michael C. Thompson
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
