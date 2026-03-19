@@ -1,15 +1,17 @@
 import { handleEmailFormSubmission } from '@/actions/email'
-import { InlineEmailForm } from '@/vibes/soul/sections/inline-email-form'
+import { ContactForm } from '@/vibes/soul/sections/contact-form'
 
 export interface EmailFormProps {
-  placeholder: string
+  emailPlaceholder?: string
+  messagePlaceholder?: string
+  submitLabel?: string
   className?: string
 }
 
-export default function EmailForm({ placeholder, className }: EmailFormProps) {
+export default function EmailForm({ className, ...props }: EmailFormProps) {
   return (
     <div className={className}>
-      <InlineEmailForm placeholder={placeholder} action={handleEmailFormSubmission} />
+      <ContactForm {...props} action={handleEmailFormSubmission} />
     </div>
   )
 }
