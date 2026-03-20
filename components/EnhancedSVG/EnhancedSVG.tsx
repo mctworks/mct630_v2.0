@@ -71,6 +71,7 @@ export function EnhancedSVG({
     const elements = svgEl.querySelectorAll('*')
     elements.forEach(el => {
       if (el.tagName.toLowerCase() === 'defs') return
+      if (el.closest('mask')) return
       
       const tagName = el.tagName.toLowerCase()
       const originalStroke = el.getAttribute('stroke')
