@@ -64,19 +64,17 @@ export default function MotionToggle() {
   const toggle = useCallback(() => {
     // Get fresh values to avoid stale state
     const currentStored = getStoredSetting()
-    const currentEffective = getEffectivePrefersReduced()
     
-    let next: ReducedMotionSetting
+    let next: ReducedMotionSetting | null
     
+    // Cycle through three states: system (null) -> reduced -> standard -> system
     if (currentStored === 'reduced') {
       next = 'standard'
     } else if (currentStored === 'standard') {
-      next = 'reduced'
+      next = null // Back to system default
     } else {
-      // No stored setting, so we're using system preference
-      // Toggle to the opposite of system preference
-      const systemReduced = getSystemPrefersReduced()
-      next = systemReduced ? 'standard' : 'reduced'
+      // No stored setting (system default) -> start with reduced
+      next = 'reduced'
     }
     
     setStoredSetting(next)
@@ -90,36 +88,47 @@ export default function MotionToggle() {
     return null
   }
 
-  // Hide the toggle if system prefers reduced AND user hasn't overridden it
-  if (systemPrefersReduced && !stored) {
-    return null
+  // Determine current state for display purposes
+  const currentState = stored || 'system'
+  
+  // Determine labels based on current state
+  const getStateLabel = () => {
+    if (stored === 'reduced') return 'Reduced Motion'
+    if (stored === 'standard') return 'Standard Motion'
+    return `System Default (${systemPrefersReduced ? 'Reduced' : 'Standard'})`
   }
 
-  const ariaLabel = stored
-    ? `Motion override: ${stored}. Click to toggle between reduced and standard motion.`
-    : `Using system preference (${systemPrefersReduced ? 'reduced' : 'standard'}). Click to set override.`
+  const ariaLabel = `Motion preference: ${getStateLabel()}. Click to cycle through System Default, Reduced Motion, and Standard Motion.`
 
   return (
     <div className="motion-toggle inline-flex items-center gap-2">
       <button
-        aria-pressed={effectiveReduced}
+        aria-pressed={currentState === 'reduced' ? 'true' : currentState === 'standard' ? 'false' : 'mixed'}
         onClick={toggle}
-        title="Toggle reduced-motion"
+        title={`Motion: ${getStateLabel()}`}
         aria-label={ariaLabel}
         className="p-1 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary"
       >
-        {effectiveReduced ? (
+        {currentState === 'reduced' ? (
           <img 
             src="/icons/MCT630_reduced_motion_icon.v.1.0.svg" 
-            alt="Reduced motion" 
+            alt="Reduced motion active" 
+            width={36} 
+            height={36}
+            className="motion-icon"
+          />
+        ) : currentState === 'standard' ? (
+          <img 
+            src="/icons/MCT630_standard_motion_icon.v.1.0.svg" 
+            alt="Standard motion active" 
             width={36} 
             height={36}
             className="motion-icon"
           />
         ) : (
           <img 
-            src="/icons/MCT630_standard_motion_icon.v.1.0.svg" 
-            alt="Standard motion" 
+            src="/icons/MCT630_system_motion_icon.v.1.0.svg" 
+            alt="System default motion" 
             width={36} 
             height={36}
             className="motion-icon"
