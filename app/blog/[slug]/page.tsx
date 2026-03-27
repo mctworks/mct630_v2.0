@@ -90,10 +90,18 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
   try {
     const resolved = await getBlog(slug)
     if (resolved && blogData.blogPostCollection?.items?.[0]) {
-      ;(blogData.blogPostCollection.items[0] as any).body = {
-        ...(blogData.blogPostCollection.items[0] as any).body,
+      const item = blogData.blogPostCollection.items[0] as any
+
+      // Merge rich text body with resolved asset links
+      item.body = {
+        ...item.body,
         ...(resolved.body || {}),
       }
+
+      // Merge related fields — these are NOT in GetBlogsDocument's selection set
+      // so they're pulled from the getBlog inline query which now requests them
+      item.relatedProjects = resolved.relatedProjects ?? null
+      item.relatedBlogPosts = resolved.relatedBlogPosts ?? null
     }
   } catch (err) {
     console.warn('Failed to resolve inline assets for blog body', err)

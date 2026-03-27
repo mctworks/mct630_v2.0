@@ -44,14 +44,6 @@ query GetBlogs(
               width
               height
             }
-            inline {
-              sys { id }
-              url
-              title
-              description
-              width
-              height
-            }
           }
         }
       }

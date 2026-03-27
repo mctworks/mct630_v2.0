@@ -4,10 +4,11 @@ import { ReactNode, createContext, useContext } from 'react'
 
 import { GetBlogsQuery } from '@/generated/contentful'
 
-type CollectionType = GetBlogsQuery['blogPostCollection']
+// Support both blog and portfolio collections
+type CollectionType = GetBlogsQuery['blogPostCollection'] | { items: any[] }
 
 const ContentfulContext = createContext<
-  { data: NonNullable<CollectionType>['items'] } | undefined
+  { data: any[] } | undefined
 >(undefined)
 
 export function ContentfulProvider({

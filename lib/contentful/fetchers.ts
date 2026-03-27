@@ -12,8 +12,8 @@ export type QueriedBlogPost = {
   description?: string | null
   publishDate?: string | null
   author?: string | null
-  relatedProjects?: any | null // Add this
-  relatedBlogPosts?: any | null // Add this
+  relatedProjects?: any | null
+  relatedBlogPosts?: any | null
   body?: {
     __typename?: 'BlogPostBody'
     json?: {
@@ -46,6 +46,8 @@ export async function getAllBlogs(): Promise<QueriedBlogPost[]> {
           banner { url width height title description }
           publishDate
           author
+          relatedProjects
+          relatedBlogPosts
         }
       }
     }
@@ -86,6 +88,8 @@ export async function getBlog(slug: string): Promise<QueriedBlogPost | null> {
           banner { url width height title description }
           publishDate
           author
+          relatedProjects
+          relatedBlogPosts
         }
       }
     }
@@ -119,7 +123,6 @@ export async function getBlog(slug: string): Promise<QueriedBlogPost | null> {
           }
         }
 
-        // Attach a minimal links structure expected by renderers
         ;(blog as any).body.links = {
           assets: {
             block: assets,
@@ -149,6 +152,8 @@ export type QueriedPortfolioPiece = {
   name?: string | null
   description?: string | null
   recentProject?: boolean | null
+  relatedProjects?: any | null
+  relatedBlogPosts?: any | null
   body?: {
     __typename?: 'PortfolioPieceBody'
     json?: { [key: string]: any } | null
@@ -179,6 +184,8 @@ export async function getAllPortfolioPieces(): Promise<QueriedPortfolioPiece[]> 
           recentProject
           body { json }
           banner { url width height title description }
+          relatedProjects
+          relatedBlogPosts
         }
       }
     }
@@ -213,6 +220,8 @@ export async function getPortfolioPiece(slug: string): Promise<QueriedPortfolioP
           recentProject
           body { json }
           banner { url width height title description }
+          relatedProjects
+          relatedBlogPosts
         }
       }
     }
@@ -222,7 +231,6 @@ export async function getPortfolioPiece(slug: string): Promise<QueriedPortfolioP
   const piece = (portfolioPieceCollection?.items[0] as unknown as QueriedPortfolioPiece) ?? null
 
   if (piece && piece.body?.json) {
-    // resolve embedded assets like getBlog
     try {
       const ids = new Set<string>()
       const walk = (node: any) => {

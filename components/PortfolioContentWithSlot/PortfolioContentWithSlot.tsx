@@ -1,13 +1,14 @@
 'use client'
 
 import React, { Suspense, useEffect, useState } from 'react'
-import Image from 'next/image'
 import EnhancedSVG from '@/components/EnhancedSVG/EnhancedSVG'
 import TransitionLink from '@/components/TransitionLink/TransitionLink'
 import { PortfolioPieceImage } from '@/components/Contentful/entries/PortfolioPiece/PortfolioPieceImage'
 import { PortfolioPieceRichText } from '@/components/Contentful/entries/PortfolioPiece/PortfolioPieceRichText'
 import { PortfolioPieceText } from '@/components/Contentful/entries/PortfolioPiece/PortfolioPieceText'
 import { SectionLayout } from '@/vibes/soul/sections/section-layout'
+import { RelatedContent, parseSlugs } from '@/components/RelatedContent/RelatedContent'
+import type { RelatedTransitionConfig } from '@/components/RelatedContent/RelatedContent'
 import { useContentfulData } from '@/lib/contentful/provider'
 import { QueriedPortfolioPiece } from '@/lib/contentful/fetchers'
 
@@ -19,7 +20,6 @@ interface Props {
   h1?: { style?: string }
   h2?: { style?: string }
   h3?: { style?: string }
-  // ALL ENHANCEDSVG PROPS - COLOR + ANIMATION
   returnIcon?: {
     lightStrokeColor?: string
     darkStrokeColor?: string
@@ -33,30 +33,40 @@ interface Props {
     logoStrokeWidth?: number
     animatePaths?: string
   }
+  relatedSection?: {
+    animationType?: string
+    rotationSpeed?: number
+    zoomScale?: number
+    transitionDuration?: number
+    gradientStart?: string
+    gradientEnd?: string
+    splashScale?: number
+    animatedPathId?: string
+    strokeWidth?: number
+    splashImage?: string
+  }
   children?: React.ReactNode
 }
 
-function LivePortfolioContent({ 
-  className, 
-  title, 
-  description, 
-  body, 
-  h1, 
-  h2, 
+function LivePortfolioContent({
+  className,
+  title,
+  description,
+  body,
+  h1,
+  h2,
   h3,
   returnIcon,
-  children 
+  relatedSection,
+  children,
 }: Props) {
   const { data: pieces } = useContentfulData()
 
-  // Create local state for icon config with defaults
   const [iconConfig, setIconConfig] = useState({
-    // COLOR PROPS
     lightStrokeColor: '#000000',
     darkStrokeColor: '#ffffff',
     lightFillColor: '#000000',
     darkFillColor: '#ffffff',
-    // ANIMATION PROPS
     enableGradientDraw: true,
     gradientStartColor: '#6EB1FF',
     gradientEndColor: '#C94F8A',
@@ -66,46 +76,57 @@ function LivePortfolioContent({
     animatePaths: 'frame, codeslash',
   })
 
-  // Load config from localStorage
   useEffect(() => {
     if (typeof window === 'undefined') return
     try {
       const raw = localStorage.getItem('portfolioTransitionsIconConfig')
       if (!raw) return
       const parsed = JSON.parse(raw)
-
       if (parsed && typeof parsed === 'object') {
-        setIconConfig({
-          // COLOR PROPS
-          lightStrokeColor: parsed.lightStrokeColor ?? iconConfig.lightStrokeColor,
-          darkStrokeColor: parsed.darkStrokeColor ?? iconConfig.darkStrokeColor,
-          lightFillColor: parsed.lightFillColor ?? iconConfig.lightFillColor,
-          darkFillColor: parsed.darkFillColor ?? iconConfig.darkFillColor,
-          // ANIMATION PROPS
-          enableGradientDraw: parsed.enableGradientDraw ?? iconConfig.enableGradientDraw,
-          gradientStartColor: parsed.gradientStartColor ?? iconConfig.gradientStartColor,
-          gradientEndColor: parsed.gradientEndColor ?? iconConfig.gradientEndColor,
-          gradientDuration: parsed.gradientDuration ?? iconConfig.gradientDuration,
-          resetDuration: parsed.resetDuration ?? iconConfig.resetDuration,
-          logoStrokeWidth: parsed.logoStrokeWidth ?? iconConfig.logoStrokeWidth,
-          animatePaths: parsed.animatePaths ?? iconConfig.animatePaths,
-        })
+        setIconConfig(prev => ({ ...prev, ...parsed }))
       }
-    } catch (e) {
+    } catch {
       // ignore
     }
   }, [])
 
-  // Merge props from Makeswift with localStorage config
-  const mergedConfig = {
-    ...iconConfig,
-    ...(returnIcon || {}),
+  const mergedConfig = { ...iconConfig, ...(returnIcon || {}) }
+
+  // ── Related content ─────────────────────────────────────────────────
+  const valid = (pieces as any[] | null)?.filter(
+    (p): p is QueriedPortfolioPiece =>
+      p != null && p.__typename === 'PortfolioPiece' && typeof p._id === 'string'
+  ) ?? []
+
+  const piece = valid.length > 0 ? valid[0] : null
+
+  const relatedBlogSlugs = parseSlugs(piece?.relatedBlogPosts)
+  const relatedProjectSlugs = parseSlugs(piece?.relatedProjects)
+
+  console.log('[PortfolioContentWithSlot] Related content:', {
+    projectName: piece?.name,
+    relatedBlogPostsRaw: piece?.relatedBlogPosts,
+    relatedProjectsRaw: piece?.relatedProjects,
+    parsedBlogSlugs: relatedBlogSlugs,
+    parsedProjectSlugs: relatedProjectSlugs,
+  })
+
+  const relatedTransitionConfig: RelatedTransitionConfig = {
+    animationType: relatedSection?.animationType ?? 'ActraiserDrop',
+    rotationSpeed: relatedSection?.rotationSpeed ?? 60,
+    zoomScale: relatedSection?.zoomScale ?? 8,
+    transitionDuration: relatedSection?.transitionDuration ?? 1,
+    gradientStart: relatedSection?.gradientStart ?? '#6EB1FF',
+    gradientEnd: relatedSection?.gradientEnd ?? '#C94F8A',
+    splashScale: relatedSection?.splashScale ?? 3,
+    animatedPathId: relatedSection?.animatedPathId ?? 'all',
+    strokeWidth: relatedSection?.strokeWidth ?? 3,
+    splashImage: relatedSection?.splashImage ?? '',
   }
 
   console.log('🔍 LivePortfolioContent render:', {
     piecesCount: pieces?.length,
-    piecesType: Array.isArray(pieces),
-    firstPiece: pieces?.[0]?.__typename
+    firstPiece: (pieces as any[])?.[0]?.__typename,
   })
 
   if (!pieces || !Array.isArray(pieces) || pieces.length === 0) {
@@ -113,22 +134,17 @@ function LivePortfolioContent({
     return <div>No portfolio projects available</div>
   }
 
-  const valid = (pieces as any[]).filter((p): p is QueriedPortfolioPiece =>
-    p != null && p.__typename === 'PortfolioPiece' && typeof p._id === 'string'
-  )
-  
-  console.log('✅ Valid portfolio pieces:', valid.length)
-  
   if (valid.length === 0) return <div>No valid portfolio pieces available</div>
-
-  const piece = valid[0]
 
   return (
     <div className={className} id="portfolio-content" style={{ display: 'block' }}>
-      <a href="#portfolio-content" className="focusable-skip-link">Skip to main content</a>
+      <a href="#portfolio-content" className="focusable-skip-link">
+        Skip to main content
+      </a>
 
       <div className="breadcrumbs" style={{ marginBottom: '20px' }}>
-        <a href="/">MCT630</a> | <a href="/portfolio">Portfolio</a> | <span>{piece?.name || 'Project'}</span>
+        <a href="/">MCT630</a> | <a href="/portfolio">Portfolio</a> |{' '}
+        <span>{piece?.name || 'Project'}</span>
       </div>
 
       <PortfolioPieceImage fieldPath="banner" className={body?.style} />
@@ -143,7 +159,20 @@ function LivePortfolioContent({
         h3ClassName={h3?.style}
       />
 
-      <nav className="mx-auto w-full max-w-4xl mt-8 space-y-6" aria-label="Portfolio navigation">
+      {/* ── Related Projects & Posts ─────────────────────────────────── */}
+      {(relatedProjectSlugs.length > 0 || relatedBlogSlugs.length > 0) && (
+        <RelatedContent
+          blogSlugs={relatedBlogSlugs}
+          projectSlugs={relatedProjectSlugs}
+          transitionConfig={relatedTransitionConfig}
+        />
+      )}
+
+      {/* ── Return to Portfolio ──────────────────────────────────────── */}
+      <nav
+        className="mx-auto w-full max-w-4xl mt-8 space-y-6"
+        aria-label="Portfolio navigation"
+      >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch center-single-column">
           <div />
 
@@ -164,12 +193,10 @@ function LivePortfolioContent({
               <div>
                 <EnhancedSVG
                   svg={{ url: '/icons/MCT630_portfolio_icon.v.1.0.svg' }}
-                  // COLOR PROPS
                   lightStrokeColor={mergedConfig.lightStrokeColor}
                   darkStrokeColor={mergedConfig.darkStrokeColor}
                   lightFillColor={mergedConfig.lightFillColor}
                   darkFillColor={mergedConfig.darkFillColor}
-                  // ANIMATION PROPS
                   enableGradientDraw={mergedConfig.enableGradientDraw}
                   gradientStartColor={mergedConfig.gradientStartColor}
                   gradientEndColor={mergedConfig.gradientEndColor}
@@ -204,29 +231,59 @@ export default function PortfolioContentWithSlot({
   h2,
   h3,
   returnIcon,
+  relatedSection,
   children,
 }: Props) {
-  const isEditor = typeof window !== 'undefined' && (
-    window.location.search.includes('makeswift') || window.location.href.includes('makeswift')
-  )
+  const isEditor =
+    typeof window !== 'undefined' &&
+    (window.location.search.includes('makeswift') ||
+      window.location.href.includes('makeswift'))
 
   useEffect(() => {
     if (typeof document !== 'undefined') {
-      const makeswiftFonts = document.querySelectorAll('link[href*="fonts"]')
+      document.querySelectorAll('link[href*="fonts"]')
     }
   }, [])
 
   if (isEditor) {
     return (
       <div className={className}>
-        <div className={body?.style} style={{ background: '#f7f7f7', height: '200px', marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div
+          className={body?.style}
+          style={{
+            background: '#f7f7f7',
+            height: '200px',
+            marginBottom: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
           <span style={{ color: '#888' }}>Project Banner</span>
         </div>
-        <div className={title?.style} style={{ marginBottom: '10px' }}>Project Name</div>
-        <div className={description?.style} style={{ marginBottom: '20px', fontStyle: 'italic' }}>Project description goes here.</div>
-
+        <div className={title?.style} style={{ marginBottom: '10px' }}>
+          Project Name
+        </div>
+        <div className={description?.style} style={{ marginBottom: '20px', fontStyle: 'italic' }}>
+          Project description goes here.
+        </div>
         <div className={body?.style} style={{ lineHeight: 1.8 }}>
           <p>Rich text content will appear here on the live site.</p>
+        </div>
+
+        {/* Related section preview */}
+        <div
+          style={{
+            marginTop: '2rem',
+            padding: '1rem',
+            background: '#f9f9f9',
+            borderRadius: '8px',
+            border: '1px dashed #ccc',
+          }}
+        >
+          <p style={{ color: '#aaa', fontSize: '0.85rem', textAlign: 'center' }}>
+            Related Projects &amp; Blog Posts (live only)
+          </p>
         </div>
 
         <SectionLayout>{children}</SectionLayout>
@@ -234,10 +291,9 @@ export default function PortfolioContentWithSlot({
     )
   }
 
-  // LIVE SITE
   return (
     <Suspense fallback={<div>Loading portfolio content...</div>}>
-      <LivePortfolioContent 
+      <LivePortfolioContent
         className={className}
         title={title}
         description={description}
@@ -246,6 +302,7 @@ export default function PortfolioContentWithSlot({
         h2={h2}
         h3={h3}
         returnIcon={returnIcon}
+        relatedSection={relatedSection}
       >
         {children}
       </LivePortfolioContent>

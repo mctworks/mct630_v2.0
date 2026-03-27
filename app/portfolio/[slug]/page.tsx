@@ -58,7 +58,6 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 export async function generateStaticParams() {
-  const { getAllPortfolioPieces } = await import('@/lib/contentful/fetchers')
   const pieces = await getAllPortfolioPieces()
   return pieces.map(p => ({ slug: p?.slug })).filter(Boolean)
 }
@@ -91,6 +90,8 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
           recentProject
           body { json }
           banner { url width height title description }
+          relatedProjects
+          relatedBlogPosts
         }
       }
     }
@@ -106,10 +107,19 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
   try {
     const resolved = await getPortfolioPiece(slug)
     if (resolved && portfolioPieceCollection?.items?.[0]) {
-      ;(portfolioPieceCollection.items[0] as any).body = {
-        ...(portfolioPieceCollection.items[0] as any).body,
+      const item = portfolioPieceCollection.items[0] as any
+
+      // Merge rich text body with resolved asset links
+      item.body = {
+        ...item.body,
         ...(resolved.body || {}),
       }
+
+      // relatedProjects and relatedBlogPosts are already in the QUERY above,
+      // but getPortfolioPiece also fetches them — prefer resolved values as
+      // they go through the same fetcher normalization path
+      item.relatedProjects = resolved.relatedProjects ?? item.relatedProjects ?? null
+      item.relatedBlogPosts = resolved.relatedBlogPosts ?? item.relatedBlogPosts ?? null
     }
   } catch (err) {
     console.warn('Failed to resolve inline assets for portfolio body', err)
