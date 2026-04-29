@@ -1,5 +1,4 @@
 import createWithMakeswift from '@makeswift/runtime/next/plugin'
-import { withMatomoProxy } from '@socialgouv/matomo-next'
 
 const withMakeswift = createWithMakeswift()
 
@@ -19,8 +18,18 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  async rewrites() {
+    return [
+      {
+        source: '/stats/matomo.js',
+        destination: 'https://analytics.mct630.com/matomo.js',
+      },
+      {
+        source: '/stats/matomo.php',
+        destination: 'https://analytics.mct630.com/matomo.php',
+      },
+    ]
+  },
 }
 
-export default withMatomoProxy({
-  matomoUrl: 'https://analytics.mct630.com',
-})(withMakeswift(nextConfig))
+export default withMakeswift(nextConfig)

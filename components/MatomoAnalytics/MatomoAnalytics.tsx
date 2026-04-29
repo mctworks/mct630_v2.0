@@ -17,10 +17,13 @@ export function MatomoAnalytics() {
 
     trackAppRouter({
       siteId: MATOMO_SITE_ID,
+      url: 'https://mct630.com/stats/',
+      jsTrackerFile: 'matomo.js',
+      phpTrackerFile: 'matomo.php',
       pathname,
       searchParams,
       debug: true,
-    })
+  })
   }, [pathname, searchParams])
 
   return null
