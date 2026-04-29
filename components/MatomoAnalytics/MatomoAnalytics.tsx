@@ -17,6 +17,17 @@ export function MatomoAnalytics() {
       return
     }
 
+    useEffect(() => {
+  console.log('Matomo URL:', MATOMO_URL)
+  console.log('Matomo Site ID:', MATOMO_SITE_ID)
+  trackAppRouter({
+    url: MATOMO_URL,
+    siteId: MATOMO_SITE_ID,
+    pathname,
+    searchParams,
+  })
+}, [pathname, searchParams])
+
     trackAppRouter({
       url: MATOMO_URL,
       siteId: MATOMO_SITE_ID,
