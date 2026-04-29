@@ -1,4 +1,4 @@
-const createWithMakeswift = require('@makeswift/runtime/next/plugin')
+import createWithMakeswift from '@makeswift/runtime/next/plugin'
 
 const withMakeswift = createWithMakeswift()
 
@@ -17,12 +17,9 @@ const nextConfig = {
     ],
   },
 
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   typescript: {
     ignoreBuildErrors: true, 
   },
 }
 
-module.exports = withMakeswift(nextConfig)
+export default withMakeswift(nextConfig)
