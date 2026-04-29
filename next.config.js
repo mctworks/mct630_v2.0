@@ -21,6 +21,6 @@ const nextConfig = {
   },
 }
 
-export default withMakeswift(withMatomoProxy({
+export default withMatomoProxy({
   matomoUrl: 'https://analytics.mct630.com',
-})(nextConfig))
+})(withMakeswift(nextConfig))
