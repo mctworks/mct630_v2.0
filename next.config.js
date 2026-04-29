@@ -19,17 +19,17 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   async rewrites() {
-    return [
-      {
-        source: '/stats/matomo.js',
-        destination: 'https://analytics.mct630.com/matomo.js',
-      },
-      {
-        source: '/stats/matomo.php',
-        destination: 'https://analytics.mct630.com/matomo.php',
-      },
-    ]
-  },
+  return [
+    {
+      source: '/stats/tracker.js',
+      destination: 'https://analytics.mct630.com/matomo.js',
+    },
+    {
+      source: '/stats/collect',
+      destination: 'https://analytics.mct630.com/matomo.php',
+    },
+  ]
+},
 }
 
 export default withMakeswift(nextConfig)
