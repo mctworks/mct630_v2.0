@@ -390,7 +390,6 @@ else if (hasVisibleFill && !isGradientFill) {
       if (existing) return
 
       if (svgContent) {
-        console.warn('EnhancedSVG: wrapper lost <svg>, re-injecting cached content')
         wrapper.innerHTML = svgContent
         const svgEl = wrapper.querySelector('svg')
         if (svgEl) {
@@ -399,8 +398,6 @@ else if (hasVisibleFill && !isGradientFill) {
         }
         return
       }
-
-      console.warn('EnhancedSVG: wrapper lost <svg> and no cached content, refetching', svg.url)
       const resp = await fetch(svg.url, { cache: 'no-cache' })
       if (!resp.ok) return
       const text = await resp.text()
