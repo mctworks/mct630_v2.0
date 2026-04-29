@@ -1,10 +1,10 @@
 import createWithMakeswift from '@makeswift/runtime/next/plugin'
+import { withMatomoProxy } from '@socialgouv/matomo-next'
 
 const withMakeswift = createWithMakeswift()
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
- // fileTracingRoot: __dirname,
   turbopack: {},
   images: {
     remotePatterns: [
@@ -16,10 +16,11 @@ const nextConfig = {
       },
     ],
   },
-
   typescript: {
-    ignoreBuildErrors: true, 
+    ignoreBuildErrors: true,
   },
 }
 
-export default withMakeswift(nextConfig)
+export default withMakeswift(withMatomoProxy({
+  matomoUrl: 'https://analytics.mct630.com',
+})(nextConfig))
