@@ -1,4 +1,3 @@
-// components/MatomoAnalytics/MatomoAnalytics.tsx
 'use client'
 
 import { trackAppRouter } from '@socialgouv/matomo-next'
@@ -13,26 +12,17 @@ export function MatomoAnalytics() {
   const searchParams = useSearchParams()
 
   useEffect(() => {
-    if (!MATOMO_URL || !MATOMO_SITE_ID) {
-      return
-    }
+    console.log('Matomo URL:', MATOMO_URL)
+    console.log('Matomo Site ID:', MATOMO_SITE_ID)
 
-    useEffect(() => {
-  console.log('Matomo URL:', MATOMO_URL)
-  console.log('Matomo Site ID:', MATOMO_SITE_ID)
-  trackAppRouter({
-    url: MATOMO_URL,
-    siteId: MATOMO_SITE_ID,
-    pathname,
-    searchParams,
-  })
-}, [pathname, searchParams])
+    if (!MATOMO_URL || !MATOMO_SITE_ID) return
 
     trackAppRouter({
       url: MATOMO_URL,
       siteId: MATOMO_SITE_ID,
       pathname,
       searchParams,
+      debug: true,
     })
   }, [pathname, searchParams])
 
