@@ -11,6 +11,8 @@ import NavMenuPlus from '@/components/NavMenuPlus/NavMenuPlus'
 import TransitionHandler from '@/components/TransitionHandler/TransitionHandler'
 import './globals.css'
 import { Analytics } from "@vercel/analytics/next"
+import { Suspense } from 'react'
+import { MatomoAnalytics } from '@/components/MatomoAnalytics/MatomoAnalytics'
 
 const body = Poppins({
   display: 'swap',
@@ -69,6 +71,9 @@ export default async function RootLayout({
     <html lang="en">
       <body className={`${body.variable} ${heading.variable} ${mono.variable} ${ztGatha.variable}`}>
       <Analytics />
+      <Suspense fallback={null}>
+        <MatomoAnalytics />
+      </Suspense>
         <div id="outer-container">
           <MakeswiftProvider siteVersion={await getSiteVersion()}>
             <ThemeConfig>
