@@ -13,17 +13,14 @@ export function MatomoAnalytics() {
   useEffect(() => {
     if (!MATOMO_SITE_ID) return
 
-    console.log('Matomo Site ID:', MATOMO_SITE_ID)
-
     trackAppRouter({
       siteId: MATOMO_SITE_ID,
-      url: 'https://mct630.com/stats',
-      jsTrackerFile: 'tracker.js',
-      phpTrackerFile: 'collect',
+      url: 'https://mct630.com',
+      jsTrackerFile: 'mct-x7k2q9.js',
+      phpTrackerFile: 'mct-x7k2q9',
       pathname,
       searchParams,
-      debug: true,
-   })
+    })
   }, [pathname, searchParams])
 
   return null

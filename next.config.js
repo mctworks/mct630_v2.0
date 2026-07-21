@@ -21,11 +21,11 @@ const nextConfig = {
   async rewrites() {
   return [
     {
-      source: '/stats/tracker.js',
+      source: '/mct-x7k2q9.js',
       destination: 'https://analytics.mct630.com/matomo.js',
     },
     {
-      source: '/stats/collect',
+      source: '/mct-x7k2q9',
       destination: 'https://analytics.mct630.com/matomo.php',
     },
   ]
