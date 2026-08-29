@@ -97,6 +97,7 @@ export default async function RootLayout({
             </ThemeConfig>
           </MakeswiftProvider>
         </div>
+        <Analytics />
       </body>
     </html>
   )
